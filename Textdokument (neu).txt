@@ -1,0 +1,18 @@
+supabase
+
+api link
+https://cinauvcuowykultivmpn.supabase.co
+
+
+public api key
+sb_publishable_30lKM6PZAeIkXgnuo08j9A_7eI1H645
+
+
+
+Google Cloud AIO
+
+Client-ID
+439704021480-236ufaabupl6phq1mcid6pg39mrt2dc9.apps.googleusercontent.com
+
+Clientschlüssel
+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
