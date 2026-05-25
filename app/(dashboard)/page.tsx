@@ -15,7 +15,6 @@ interface Widget {
   isPremium: boolean;
 }
 
-// Typisches Android Material-Design QR-Code Icon als SVG
 const AndroidQrIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg 
     viewBox="0 0 24 24" 
@@ -93,17 +92,15 @@ export default function DashboardOverview() {
 
   return (
     <>
-      <div className="w-full max-w-6xl mx-auto px-6 py-10 space-y-10 transition-colors duration-300">
+      <div className="w-full max-w-6xl mx-auto px-6 py-10 space-y-10">
         
         {/* Header-Bereich */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-zinc-500/10 pb-6">
           <div className="flex items-center justify-between w-full">
             <div>
-              {/* GEÄNDERT: Inline-Style erzwingt echtes Weiß (#ffffff) im Dark Mode und dunkles Grau (#18181b) im Light Mode */}
-              <h1 
-                className="text-3xl font-bold tracking-tight mb-1" 
-                style={{ color: isDark ? "#ffffff" : "#18181b" }}
-              >
+              {/* FIX: Alle expliziten Farbklassen entfernt! Die Überschrift erbt jetzt 
+                  direkt die Textfarbe von deinem funktionierenden Dashboard-Layout. */}
+              <h1 className="text-3xl font-bold tracking-tight mb-1">
                 Dein Dashboard
               </h1>
               <p className="text-zinc-500 text-sm">Schön, dass du wieder da bist! Passe dein Interface an.</p>
@@ -112,27 +109,26 @@ export default function DashboardOverview() {
             {/* Android QR-Code Button */}
             <button 
               title="QR-Code scannen" 
-              className={`p-3 rounded-xl border transition active:scale-95 shadow-sm ml-4 flex items-center justify-center
-                ${isDark 
-                  ? "bg-zinc-900 border-zinc-800 text-white hover:bg-zinc-800" 
-                  : "bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-50"}`}
+              className="p-3 rounded-xl border transition active:scale-95 shadow-sm ml-4 flex items-center justify-center
+                bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-50
+                dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-800"
             >
               <AndroidQrIcon className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Scroll-Leiste */}
+          {/* Icon-Leiste */}
           <div className="w-full md:w-auto overflow-x-auto scrollbar-none pb-2 -mx-6 px-6 md:mx-0 md:px-0">
-            <div className={`p-1.5 rounded-xl border backdrop-blur-md inline-flex items-center gap-1.5 text-xs whitespace-nowrap min-w-full md:min-w-0
-              ${isDark ? "bg-zinc-900/40 border-zinc-800" : "bg-white/40 border-zinc-200"}`}>
+            <div className="p-1.5 rounded-xl border backdrop-blur-md inline-flex items-center gap-1.5 text-xs whitespace-nowrap min-w-full md:min-w-0
+              bg-white/40 border-zinc-200 dark:bg-zinc-900/40 dark:border-zinc-800">
               {widgets.map(w => (
                 <button
                   key={w.id}
                   onClick={() => toggleVisibility(w.id)}
                   className={`px-3 py-1.5 rounded-lg font-medium transition inline-flex items-center gap-1.5 shrink-0
                     ${w.visible 
-                      ? (isDark ? "bg-white text-black font-semibold" : "bg-black text-white font-semibold") 
-                      : (isDark ? "bg-zinc-800 text-zinc-400 hover:text-zinc-200" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 border border-zinc-200/60")}`}
+                      ? "bg-black text-white font-semibold dark:bg-white dark:text-black" 
+                      : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 border border-zinc-200/60 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"}`}
                 >
                   <span className="text-sm">{w.icon}</span> 
                   <span>{w.title}</span>
@@ -149,27 +145,29 @@ export default function DashboardOverview() {
             .map(widget => (
               <div
                 key={widget.id}
-                className={`group relative rounded-2xl border p-6 flex flex-col justify-between backdrop-blur-md transition-all duration-300
-                  ${widget.size === "wide" ? "md:col-span-2" : "col-span-1"}
-                  ${isDark 
-                    ? "bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700 hover:shadow-lg" 
-                    : "bg-white/30 border-zinc-200/80 hover:border-zinc-300 hover:shadow-lg"}`}
+                className="group relative rounded-2xl border p-6 flex flex-col justify-between backdrop-blur-md transition-all duration-300
+                  md:col-span-1 data-[size=wide]:md:col-span-2
+                  bg-white/30 border-zinc-200/80 hover:border-zinc-300 hover:shadow-lg
+                  dark:bg-zinc-900/30 dark:border-zinc-800/80 dark:hover:border-zinc-700"
+                data-size={widget.size}
               >
                 {/* Widget Toolbar */}
                 <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => toggleSize(widget.id)}
                     title={widget.size === "normal" ? "Breit machen" : "Normalgröße"}
-                    className={`p-1.5 rounded-md text-xs border transition active:scale-90
-                      ${isDark ? "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white" : "bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-zinc-200"}`}
+                    className="p-1.5 rounded-md text-xs border transition active:scale-90
+                      bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-zinc-200
+                      dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-white"
                   >
                     {widget.size === "normal" ? "↔️" : "↕️"}
                   </button>
                   <button
                     onClick={() => toggleVisibility(widget.id)}
                     title="Ausblenden"
-                    className={`p-1.5 rounded-md text-xs border transition active:scale-90
-                      ${isDark ? "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-red-400" : "bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-red-50"}`}
+                    className="p-1.5 rounded-md text-xs border transition active:scale-90
+                      bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-red-50
+                      dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-red-400"
                   >
                     ✕
                   </button>
@@ -179,13 +177,8 @@ export default function DashboardOverview() {
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-2xl p-2 rounded-xl bg-zinc-500/10">{widget.icon}</span>
-                    {/* GEÄNDERT: Auch die Widget-Titel nutzen jetzt Inline-Styles zur Farberzwingung */}
-                    <h3 
-                      className="text-lg font-semibold tracking-tight"
-                      style={{ color: isDark ? "#ffffff" : "#18181b" }}
-                    >
-                      {widget.title}
-                    </h3>
+                    {/* Auch hier erbt der Titel jetzt einfach die perfekte Farbe */}
+                    <h3 className="text-lg font-semibold tracking-tight">{widget.title}</h3>
                   </div>
                   <p className="text-sm text-zinc-500 leading-relaxed pr-10">{widget.content}</p>
                 </div>
@@ -193,8 +186,9 @@ export default function DashboardOverview() {
                 {/* Aktionsbutton */}
                 <div className="mt-6 pt-4 border-t border-zinc-500/10 flex justify-end">
                   <button 
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition
-                      ${isDark ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300" : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700"}`}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition
+                      bg-zinc-100 hover:bg-zinc-200 text-zinc-700
+                      dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300"
                   >
                     Öffnen →
                   </button>
@@ -205,8 +199,7 @@ export default function DashboardOverview() {
 
         {/* Feedback, wenn alles ausgeblendet ist */}
         {widgets.filter(w => w.visible).length === 0 && (
-          <div className={`w-full p-12 rounded-2xl border text-center border-dashed
-            ${isDark ? "border-zinc-800 text-zinc-500" : "border-zinc-300 text-zinc-400"}`}>
+          <div className="w-full p-12 rounded-2xl border text-center border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
             <p className="text-base mb-2">Alle Widgets ausgeblendet.</p>
             <p className="text-xs">Nutze die Menüleiste oben, um deine Tools wieder einzublenden.</p>
           </div>
