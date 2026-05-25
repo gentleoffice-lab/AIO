@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/useTheme";
 import { supabase } from "@/lib/supabaseClient"; 
+import Link from "next/link";
 
 interface Widget {
   id: string;
@@ -107,14 +108,16 @@ export default function DashboardOverview() {
             </div>
             
             {/* Android QR-Code Button */}
-            <button 
-              title="QR-Code scannen" 
-              className="p-3 rounded-xl border transition active:scale-95 shadow-sm ml-4 flex items-center justify-center
+            {/* Android QR-Code Button als funktionaler Link */}
+            <Link 
+            href="/qrscanner" 
+            title="QR-Code scannen" 
+            className="p-3 rounded-xl border transition active:scale-95 shadow-sm ml-4 flex items-center justify-center
                 bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-50
                 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-800"
             >
-              <AndroidQrIcon className="w-6 h-6" />
-            </button>
+            <AndroidQrIcon className="w-6 h-6" />
+            </Link>
           </div>
 
           {/* Icon-Leiste */}

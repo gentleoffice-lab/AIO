@@ -44,9 +44,8 @@ export default function DashboardLayout({
         <nav className="flex-1 p-8 space-y-10 overflow-y-auto no-scrollbar">
           <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Main</p>
-            <SidebarLink href="/components/Login" label="Login" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Dashboard" label="Dashboard" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Chat" label="Chat" close={() => setOpen(false)} />
+            <SidebarLink href="/" label="Dashboard" close={() => setOpen(false)} />
+            <SidebarLink href="/chat" label="Chat" close={() => setOpen(false)} />
             <SidebarLink href="/components/Games" label="Games" close={() => setOpen(false)} />
           </div>
           <div className="space-y-4">
@@ -56,7 +55,7 @@ export default function DashboardLayout({
             <SidebarLink href="/components/Rechner" label="Rechner" close={() => setOpen(false)} />
             <SidebarLink href="/components/Notizen" label="Notizen" close={() => setOpen(false)} />
             <SidebarLink href="/components/Upload" label="Upload" close={() => setOpen(false)} />
-            <SidebarLink href="/components/PDF Scannen" label="PDF Scannen" close={() => setOpen(false)} />
+            <SidebarLink href="/pdfscanner" label="PDF Scannen" close={() => setOpen(false)} />
           </div>
           <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Optionen</p>
