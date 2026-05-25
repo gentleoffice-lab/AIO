@@ -15,6 +15,18 @@ interface Widget {
   isPremium: boolean;
 }
 
+// Typisches Android Material-Design QR-Code Icon als SVG
+const AndroidQrIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 4h2v2h-2v-2zm2 2h2v2h-2v-2zm-4-2h2v2h-2v-2zm2-2h2v2h-2v-2z"/>
+  </svg>
+);
+
 export default function DashboardOverview() {
   const { isDark } = useTheme();
   const router = useRouter();
@@ -53,7 +65,7 @@ export default function DashboardOverview() {
     };
   }, [router]);
 
-  // WIDGET-STATE (Alle Widgets sind jetzt standardmäßig aktiv und ungesperrt)
+  // WIDGET-STATE
   const [widgets, setWidgets] = useState<Widget[]>([
     { id: "chat", title: "KI-Chat", icon: "💬", visible: true, size: "normal", content: "Schneller Zugriff auf deine KI-Assistenten.", isPremium: false },
     { id: "calender", title: "Kalender", icon: "📅", visible: true, size: "normal", content: "Deine nächsten Termine auf einen Blick.", isPremium: false },
@@ -70,7 +82,6 @@ export default function DashboardOverview() {
     setWidgets(widgets.map(w => w.id === id ? { ...w, size: w.size === "normal" ? "wide" : "normal" } : w));
   };
 
-  // LADE-ANIMATION
   if (isLoggedIn === null) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-zinc-400 gap-3">
@@ -82,42 +93,48 @@ export default function DashboardOverview() {
 
   return (
     <>
-      <div className={`w-full max-w-6xl mx-auto px-6 py-10 space-y-10 transition-colors duration-300 ${isDark ? "text-white" : "text-zinc-900"}`}>
+      <div className="w-full max-w-6xl mx-auto px-6 py-10 space-y-10 transition-colors duration-300">
         
-        {/* Header-Bereich mit integriertem QR-Code Symbol rechtszentriert */}
+        {/* Header-Bereich */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-zinc-500/10 pb-6">
           <div className="flex items-center justify-between w-full">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight mb-1">Dein Dashboard</h1>
+              {/* GEÄNDERT: Inline-Style erzwingt echtes Weiß (#ffffff) im Dark Mode und dunkles Grau (#18181b) im Light Mode */}
+              <h1 
+                className="text-3xl font-bold tracking-tight mb-1" 
+                style={{ color: isDark ? "#ffffff" : "#18181b" }}
+              >
+                Dein Dashboard
+              </h1>
               <p className="text-zinc-500 text-sm">Schön, dass du wieder da bist! Passe dein Interface an.</p>
             </div>
             
-            {/* NEU: QR-Code Leser Symbol rechtsbündig im Header */}
+            {/* Android QR-Code Button */}
             <button 
               title="QR-Code scannen" 
-              className={`p-3 rounded-xl border text-xl transition active:scale-95 shadow-sm ml-4
+              className={`p-3 rounded-xl border transition active:scale-95 shadow-sm ml-4 flex items-center justify-center
                 ${isDark 
                   ? "bg-zinc-900 border-zinc-800 text-white hover:bg-zinc-800" 
                   : "bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-50"}`}
             >
-              🔲
+              <AndroidQrIcon className="w-6 h-6" />
             </button>
           </div>
 
-          {/* NEU: Einzeilige Menüleiste mit horizontalem Swipe auf Mobilgeräten */}
-          <div className="w-full md:w-auto overflow-x-auto flex-shrink-0 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-none">
-            <div className={`p-2 rounded-xl border backdrop-blur-md flex items-center gap-1.5 text-xs flex-nowrap whitespace-nowrap
+          {/* Scroll-Leiste */}
+          <div className="w-full md:w-auto overflow-x-auto scrollbar-none pb-2 -mx-6 px-6 md:mx-0 md:px-0">
+            <div className={`p-1.5 rounded-xl border backdrop-blur-md inline-flex items-center gap-1.5 text-xs whitespace-nowrap min-w-full md:min-w-0
               ${isDark ? "bg-zinc-900/40 border-zinc-800" : "bg-white/40 border-zinc-200"}`}>
               {widgets.map(w => (
                 <button
                   key={w.id}
                   onClick={() => toggleVisibility(w.id)}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition inline-flex items-center gap-1.5
+                  className={`px-3 py-1.5 rounded-lg font-medium transition inline-flex items-center gap-1.5 shrink-0
                     ${w.visible 
                       ? (isDark ? "bg-white text-black font-semibold" : "bg-black text-white font-semibold") 
-                      : (isDark ? "bg-zinc-800 text-zinc-500 hover:text-zinc-300" : "bg-zinc-200 text-zinc-500 hover:bg-zinc-300")}`}
+                      : (isDark ? "bg-zinc-800 text-zinc-400 hover:text-zinc-200" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 border border-zinc-200/60")}`}
                 >
-                  <span>{w.icon}</span> 
+                  <span className="text-sm">{w.icon}</span> 
                   <span>{w.title}</span>
                 </button>
               ))}
@@ -162,7 +179,13 @@ export default function DashboardOverview() {
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-2xl p-2 rounded-xl bg-zinc-500/10">{widget.icon}</span>
-                    <h3 className="text-lg font-semibold tracking-tight">{widget.title}</h3>
+                    {/* GEÄNDERT: Auch die Widget-Titel nutzen jetzt Inline-Styles zur Farberzwingung */}
+                    <h3 
+                      className="text-lg font-semibold tracking-tight"
+                      style={{ color: isDark ? "#ffffff" : "#18181b" }}
+                    >
+                      {widget.title}
+                    </h3>
                   </div>
                   <p className="text-sm text-zinc-500 leading-relaxed pr-10">{widget.content}</p>
                 </div>
