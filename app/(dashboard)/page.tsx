@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/useTheme";
-import DashboardLayout from "./(dashboard)/layout"; 
-// 1. IMPORTIERE DEINEN SUPABASE CLIENT
 import { supabase } from "@/lib/supabaseClient"; 
 
 interface Widget {
@@ -14,6 +12,7 @@ interface Widget {
   visible: boolean;
   size: "normal" | "wide";
   content: string;
+  isPremium: boolean;
 }
 
 export default function DashboardOverview() {
@@ -21,18 +20,15 @@ export default function DashboardOverview() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  // 2. DER ECHTE AUTH-CHECK
+  // ECHTER AUTH-CHECK
   useEffect(() => {
     const checkUserSession = async () => {
       try {
-        // Holt die aktuelle Sitzung direkt live aus Supabase
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          // Keine Session da? Ab zum Login!
           router.push("/login");
         } else {
-          // Session gültig? Dashboard freischalten!
           setIsLoggedIn(true);
         }
       } catch (error) {
@@ -43,7 +39,6 @@ export default function DashboardOverview() {
 
     checkUserSession();
 
-    // Optional aber hochprofessionell: Höre auf Änderungen (z.B. Logout in einem anderen Tab)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
         setIsLoggedIn(false);
@@ -58,28 +53,24 @@ export default function DashboardOverview() {
     };
   }, [router]);
 
-  // ... (Der gesamte restliche Widget- und Grid-Code bleibt exakt so wie er ist!)
-
-  // 2. WIDGET-STATE (Deine Kacheln und Einstellungen)
+  // WIDGET-STATE (Alle Widgets sind jetzt standardmäßig aktiv und ungesperrt)
   const [widgets, setWidgets] = useState<Widget[]>([
-    { id: "chat", title: "KI-Chat", icon: "💬", visible: true, size: "normal", content: "Schneller Zugriff auf deine KI-Assistenten." },
-    { id: "calender", title: "Kalender", icon: "📅", visible: true, size: "normal", content: "Deine nächsten Termine auf einen Blick." },
-    { id: "notes", title: "Notizen", icon: "📝", visible: true, size: "wide", content: "Letzter Gedanke: Next.js Dashboard mit Widgets bauen!" },
-    { id: "games", title: "Mini-Games", icon: "🎮", visible: true, size: "normal", content: "Highscore: 2.450 Punkte." },
-    { id: "pdfscanner", title: "PDF Scanner", icon: "📄", visible: true, size: "normal", content: "Zieh Dokumente hierher zum Digitalisieren." },
+    { id: "chat", title: "KI-Chat", icon: "💬", visible: true, size: "normal", content: "Schneller Zugriff auf deine KI-Assistenten.", isPremium: false },
+    { id: "calender", title: "Kalender", icon: "📅", visible: true, size: "normal", content: "Deine nächsten Termine auf einen Blick.", isPremium: false },
+    { id: "notes", title: "Notizen", icon: "📝", visible: true, size: "wide", content: "Letzter Gedanke: Next.js Dashboard mit Widgets bauen!", isPremium: false },
+    { id: "games", title: "Mini-Games", icon: "🎮", visible: true, size: "normal", content: "Spiele eine schnelle Runde zwischendurch.", isPremium: false },
+    { id: "pdfscanner", title: "PDF Scanner", icon: "📄", visible: true, size: "normal", content: "Scanne deine Dokumente direkt in die Cloud.", isPremium: false },
   ]);
 
-  // Funktion zum Umschalten der Sichtbarkeit (Ein-/Ausblenden)
   const toggleVisibility = (id: string) => {
     setWidgets(widgets.map(w => w.id === id ? { ...w, visible: !w.visible } : w));
   };
 
-  // Funktion zum Ändern der Größe (Normal vs. Breit)
   const toggleSize = (id: string) => {
     setWidgets(widgets.map(w => w.id === id ? { ...w, size: w.size === "normal" ? "wide" : "normal" } : w));
   };
 
-  // 3. LADE-ANIMATION (Prüfungsphase)
+  // LADE-ANIMATION
   if (isLoggedIn === null) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-zinc-400 gap-3">
@@ -89,34 +80,48 @@ export default function DashboardOverview() {
     );
   }
 
-  // 4. DASHBOARD MIT HEADER UND MENU RENDERN
   return (
-    <DashboardLayout>
-      <div className="w-full max-w-6xl mx-auto px-6 py-10 space-y-10">
+    <>
+      <div className={`w-full max-w-6xl mx-auto px-6 py-10 space-y-10 transition-colors duration-300 ${isDark ? "text-white" : "text-zinc-900"}`}>
         
-        {/* Header & Steuerungsbereich */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-1">Dein Dashboard</h1>
-            <p className="text-zinc-500 text-sm">Schön, dass du wieder da bist! Passe dein Interface an.</p>
+        {/* Header-Bereich mit integriertem QR-Code Symbol rechtszentriert */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-zinc-500/10 pb-6">
+          <div className="flex items-center justify-between w-full">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-1">Dein Dashboard</h1>
+              <p className="text-zinc-500 text-sm">Schön, dass du wieder da bist! Passe dein Interface an.</p>
+            </div>
+            
+            {/* NEU: QR-Code Leser Symbol rechtsbündig im Header */}
+            <button 
+              title="QR-Code scannen" 
+              className={`p-3 rounded-xl border text-xl transition active:scale-95 shadow-sm ml-4
+                ${isDark 
+                  ? "bg-zinc-900 border-zinc-800 text-white hover:bg-zinc-800" 
+                  : "bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-50"}`}
+            >
+              🔲
+            </button>
           </div>
 
-          {/* Steuerungsknöpfe zum Ein-/Ausblenden */}
-          <div className={`p-4 rounded-xl border backdrop-blur-md flex flex-wrap gap-2 text-xs
-            ${isDark ? "bg-zinc-900/40 border-zinc-800" : "bg-white/40 border-zinc-200"}`}>
-            <span className="text-zinc-500 self-center mr-2 font-medium">Widgets:</span>
-            {widgets.map(w => (
-              <button
-                key={w.id}
-                onClick={() => toggleVisibility(w.id)}
-                className={`px-3 py-1.5 rounded-lg font-medium transition active:scale-95
-                  ${w.visible 
-                    ? (isDark ? "bg-white text-black" : "bg-black text-white") 
-                    : (isDark ? "bg-zinc-800 text-zinc-500" : "bg-zinc-200 text-zinc-400")}`}
-              >
-                {w.icon} {w.title}
-              </button>
-            ))}
+          {/* NEU: Einzeilige Menüleiste mit horizontalem Swipe auf Mobilgeräten */}
+          <div className="w-full md:w-auto overflow-x-auto flex-shrink-0 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-none">
+            <div className={`p-2 rounded-xl border backdrop-blur-md flex items-center gap-1.5 text-xs flex-nowrap whitespace-nowrap
+              ${isDark ? "bg-zinc-900/40 border-zinc-800" : "bg-white/40 border-zinc-200"}`}>
+              {widgets.map(w => (
+                <button
+                  key={w.id}
+                  onClick={() => toggleVisibility(w.id)}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition inline-flex items-center gap-1.5
+                    ${w.visible 
+                      ? (isDark ? "bg-white text-black font-semibold" : "bg-black text-white font-semibold") 
+                      : (isDark ? "bg-zinc-800 text-zinc-500 hover:text-zinc-300" : "bg-zinc-200 text-zinc-500 hover:bg-zinc-300")}`}
+                >
+                  <span>{w.icon}</span> 
+                  <span>{w.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -127,9 +132,11 @@ export default function DashboardOverview() {
             .map(widget => (
               <div
                 key={widget.id}
-                className={`group relative rounded-2xl border p-6 flex flex-col justify-between backdrop-blur-md transition-all duration-300 hover:shadow-lg
+                className={`group relative rounded-2xl border p-6 flex flex-col justify-between backdrop-blur-md transition-all duration-300
                   ${widget.size === "wide" ? "md:col-span-2" : "col-span-1"}
-                  ${isDark ? "bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700" : "bg-white/30 border-zinc-200/80 hover:border-zinc-300"}`}
+                  ${isDark 
+                    ? "bg-zinc-900/30 border-zinc-800/80 hover:border-zinc-700 hover:shadow-lg" 
+                    : "bg-white/30 border-zinc-200/80 hover:border-zinc-300 hover:shadow-lg"}`}
               >
                 {/* Widget Toolbar */}
                 <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -154,7 +161,7 @@ export default function DashboardOverview() {
                 {/* Widget-Inhalt */}
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-2xl p-2 bg-zinc-500/10 rounded-xl">{widget.icon}</span>
+                    <span className="text-2xl p-2 rounded-xl bg-zinc-500/10">{widget.icon}</span>
                     <h3 className="text-lg font-semibold tracking-tight">{widget.title}</h3>
                   </div>
                   <p className="text-sm text-zinc-500 leading-relaxed pr-10">{widget.content}</p>
@@ -162,8 +169,10 @@ export default function DashboardOverview() {
 
                 {/* Aktionsbutton */}
                 <div className="mt-6 pt-4 border-t border-zinc-500/10 flex justify-end">
-                  <button className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition
-                    ${isDark ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300" : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700"}`}>
+                  <button 
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition
+                      ${isDark ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300" : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700"}`}
+                  >
                     Öffnen →
                   </button>
                 </div>
@@ -176,10 +185,10 @@ export default function DashboardOverview() {
           <div className={`w-full p-12 rounded-2xl border text-center border-dashed
             ${isDark ? "border-zinc-800 text-zinc-500" : "border-zinc-300 text-zinc-400"}`}>
             <p className="text-base mb-2">Alle Widgets ausgeblendet.</p>
-            <p className="text-xs">Nutze die Steuerungsleiste oben, um deine Tools wieder hinzuzufügen.</p>
+            <p className="text-xs">Nutze die Menüleiste oben, um deine Tools wieder einzublenden.</p>
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }
