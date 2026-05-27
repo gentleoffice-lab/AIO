@@ -87,18 +87,18 @@ useEffect(() => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
 
-    // --- HIER KOMMT DER NEUE CODE REIN ---
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, username") 
-      .eq("user_uuid", session.user.id) // Prüft die neue Spalte gegen die auth.uid()
-      .maybeSingle();
+    // --- ERSETZE DEN ALTEN CODE HIERMIT ---
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("id, username") 
+  .eq("user_uuid", session.user.id) // WICHTIG: Hier prüfen wir die neue Spalte gegen die UUID
+  .maybeSingle();
 
-    if (profile) {
-      // Wir speichern die 'id' (dein bigint) als String für die App-Logik
-      setCurrentUserId(profile.id.toString()); 
-    }
-    // -------------------------------------
+if (profile) {
+  // 'id' ist dein int8 (BigInt), wir konvertieren es für den State
+  setCurrentUserId(profile.id.toString()); 
+}
+// --------------------------------------
   };
   initializeChat();
 }, []);
