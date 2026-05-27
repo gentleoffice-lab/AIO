@@ -1,4 +1,3 @@
-// app/(dashboard)/layout.tsx
 "use client";
 
 import { useTheme } from "@/lib/useTheme";
@@ -16,39 +15,58 @@ function SidebarLink({ href, label, close }: { href: string; label: string; clos
   );
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { theme, setTheme, isDark } = useTheme();
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`min-h-screen overflow-x-hidden transition-all duration-500 ${isDark ? "bg-black text-white" : "bg-[#f5f5f4] text-black"}`}>
+    // Wir nutzen hier nur noch native Klassen. Das "dark" Attribut auf html steuert alles.
+    <div className="min-h-screen overflow-x-hidden transition-colors duration-300 bg-background text-foreground">
       
-      <Background isDark={isDark} />
 
-      <Header open={open} setOpen={setOpen} isDark={isDark} setTheme={setTheme} />
+      {/* Header und andere Komponenten können isDark weiterhin für logische Zwecke nutzen, 
+          aber das Layout selbst muss sich nicht mehr per Ternary ändern */}
+<Header open={open} setOpen={setOpen} />
+      <main className="container mx-auto p-6">
+        {children}
+      </main>
 
-      <main>{children}</main>
-
-      <div onClick={() => setOpen(false)} className={`fixed inset-0 z-30 transition-all duration-300 ${open ? "opacity-100 pointer-events-auto bg-black/50 backdrop-blur-sm" : "opacity-0 pointer-events-none"}`} />
+      <div 
+        onClick={() => setOpen(false)} 
+        className={`fixed inset-0 z-30 transition-all duration-300 ${open ? "opacity-100 pointer-events-auto bg-black/50 backdrop-blur-sm" : "opacity-0 pointer-events-none"}`} 
+      />
       
-      <aside className={`fixed top-0 left-0 z-40 h-full w-[300px] transition-transform duration-500 ${open ? "translate-x-0" : "-translate-x-full"} ${isDark ? "bg-zinc-950/85 text-white border-zinc-800" : "bg-white/85 text-black border-zinc-300"} backdrop-blur-2xl border-r shadow-2xl flex flex-col`}>
+      <aside className={`fixed top-0 left-0 z-40 h-full w-[300px] transition-transform duration-500 ${open ? "translate-x-0" : "-translate-x-full"} bg-white/85 text-black border-zinc-300 dark:bg-zinc-950/85 dark:text-white dark:border-zinc-800 backdrop-blur-2xl border-r shadow-2xl flex flex-col`}>
+        
         <div className="relative p-6 flex justify-center border-b border-inherit">
           <button onClick={() => setOpen(false)} className="absolute left-4 top-1/2 -translate-y-1/2">✕</button>
-          <Image src={isDark ? "/logo_dark.png" : "/logo_light.png"} alt="AIO" width={100} height={100} />
+          {/* Logo-Tausch: Hier ist eine Bedingung noch sinnvoll, wenn du zwei Dateien hast */}
+          {/* Logo-Tausch per CSS-Klassen statt JavaScript-Bedingung */}
+<div className="relative w-[100px] h-[100px]">
+  <Image 
+    src="/logo_light.png" 
+    alt="AIO" 
+    fill 
+    className="block dark:hidden object-contain" 
+  />
+  <Image 
+    src="/logo_dark.png" 
+    alt="AIO" 
+    fill 
+    className="hidden dark:block object-contain" 
+  />
+</div>
         </div>
 
         <nav className="flex-1 p-8 space-y-10 overflow-y-auto no-scrollbar">
-          <div className="space-y-4">
+           {/* Sidebar-Links bleiben gleich */}
+           <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Main</p>
             <SidebarLink href="/" label="Dashboard" close={() => setOpen(false)} />
             <SidebarLink href="/chat" label="Chat" close={() => setOpen(false)} />
             <SidebarLink href="/components/Games" label="Games" close={() => setOpen(false)} />
           </div>
-          <div className="space-y-4">
+           <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Tools</p>
             <SidebarLink href="/calender" label="Kalender" close={() => setOpen(false)} />
             <SidebarLink href="/components/Tfzf Trainer" label="Tfzf Trainer" close={() => setOpen(false)} />
@@ -67,3 +85,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+         
+      

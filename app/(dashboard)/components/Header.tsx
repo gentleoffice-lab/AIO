@@ -1,51 +1,77 @@
 "use client";
-import Image from "next/image";
-// Definition der benötigten Props
-interface HeaderProps {
-open: boolean;
-setOpen: (open: boolean) => void;
-isDark: boolean;
-setTheme: (theme: "dark" | "light") => void;
-}
-export default function Header({
-open,
-setOpen,
-isDark,
-setTheme,
-}: HeaderProps) {
-return (
-<header
-className={`sticky top-0 z-20 flex items-center justify-between px-5 py-4 backdrop-blur-xl
-border-b
-${isDark ? "bg-black/60 border-zinc-800" : "bg-white/60 border-zinc-300"}`}
->
-<button
-onClick={() => setOpen(!open)}
-className="text-2xl z-50"
->
-{open ? "✕" : "☰"}
-</button>
-<button onClick={() => setOpen(false)}>
-<Image
-src={isDark ? "/logo_dark.png" : "/logo_light.png"}
-alt="AIO Logo"
-width={80}
-height={80}
-/>
-</button>
-<button
-onClick={() =>
-setTheme(isDark ? "light" : "dark")
-}
-className={`relative w-11 h-6 rounded-full transition-all duration-300
-${isDark ? "bg-zinc-800" : "bg-zinc-300"}`}
->
-<div
 
-className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300
-${isDark ? "left-1 bg-white" : "left-6 bg-black"}`}
-/>
-</button>
-</header>
-);
+import Image from "next/image";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+
+interface HeaderProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export default function Header({ open, setOpen }: HeaderProps) {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Wichtig für Next.js: Sicherstellen, dass die Komponente erst 
+  // auf dem Client gerendert wird, um Hydration-Fehler zu vermeiden.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Gibt einen Platzhalter in der richtigen Größe zurück, 
+    // um ein Layout-Springen zu verhindern.
+    return (
+      <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 backdrop-blur-xl border-b bg-white/60 border-zinc-300 dark:bg-black/60 dark:border-zinc-800 transition-colors duration-300">
+        <div className="w-8 h-8" /> 
+        <div className="w-20 h-20" />
+        <div className="w-11 h-6 rounded-full bg-zinc-300 dark:bg-zinc-800" />
+      </header>
+    );
+  }
+
+  return (
+    <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 backdrop-blur-xl border-b bg-white/60 border-zinc-300 dark:bg-black/60 dark:border-zinc-800 transition-colors duration-300">
+      
+      {/* Menü-Button */}
+      <button 
+        onClick={() => setOpen(!open)} 
+        className="text-2xl z-50 p-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+        aria-label="Menü öffnen/schließen"
+      >
+        {open ? "✕" : "☰"}
+      </button>
+
+      {/* Logo - CSS Wechsel */}
+      <div className="flex items-center">
+        <Image
+          src="/logo_light.png"
+          alt="AIO Logo"
+          width={80}
+          height={80}
+          className="block dark:hidden object-contain"
+        />
+        <Image
+          src="/logo_dark.png"
+          alt="AIO Logo"
+          width={80}
+          height={80}
+          className="hidden dark:block object-contain"
+        />
+      </div>
+
+      {/* Theme-Toggle */}
+      <button
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        className="relative w-11 h-6 rounded-full transition-all duration-300 bg-zinc-300 dark:bg-zinc-800 shadow-inner"
+        aria-label="Theme umschalten"
+      >
+        <div 
+          className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-all duration-300 bg-white dark:bg-black 
+          ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} 
+        />
+      </button>
+    </header>
+  );
 }

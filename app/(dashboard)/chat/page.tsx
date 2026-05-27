@@ -1,7 +1,6 @@
 "use client";
 
 
-
 import { useState, useRef, useEffect } from "react";
 
 import { useTheme } from "@/lib/useTheme";
@@ -191,16 +190,10 @@ export default function RealtimeWhatsAppChat() {
     try {
 
       const { data: existing } = await supabase
-
-        .from("chats")
-
-        .select("*")
-
-        .eq("name", username)
-
-        .eq("created_by", currentUserId)
-
-        .maybeSingle();
+  .from("chats")
+  .select("*")
+  .match({ name: username, created_by: currentUserId })
+  .maybeSingle();
 
 
 
@@ -358,13 +351,13 @@ export default function RealtimeWhatsAppChat() {
 
   return (
 
-    <div className={`h-[calc(100vh-65px)] w-full flex transition-colors duration-300 overflow-hidden relative ${isDark ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-900"}`}>
+    <div className="h-[calc(100vh-65px)] w-full flex overflow-hidden relative bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:bg-zinc-950 dark:text-white transition-colors duration-300">
 
       {/* LINKSEITE: Chat-Liste */}
 
-      <div className={`w-full md:w-80 flex flex-col border-r h-full shrink-0 relative ${activeChatId && "hidden md:flex"} ${isDark ? "bg-zinc-900/40 border-zinc-800" : "bg-white border-zinc-200"}`}>
+      <div className={`w-full md:w-80 flex flex-col border-r h-full shrink-0 relative bg-white dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 ${activeChatId ? "hidden md:flex" : "flex"}`}>
 
-        <div className="p-4 border-b border-inherit flex items-center justify-between">
+        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
 
           <span className="text-xl select-none">💬</span>
 
@@ -372,21 +365,20 @@ export default function RealtimeWhatsAppChat() {
 
         </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-zinc-500/10 no-scrollbar pb-24">
+       <div className="flex-1 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800 no-scrollbar pb-24">
 
           {chats.map((chat) => (
 
-            <button key={chat.id} onClick={() => setActiveChatId(chat.id)} className={`w-full p-4 flex items-center gap-3 text-left transition duration-200 ${activeChatId === chat.id ? (isDark ? "bg-zinc-800/60" : "bg-zinc-200/60") : (isDark ? "hover:bg-zinc-900/40" : "hover:bg-zinc-50")}`}>
+            <button 
+            key={chat.id} 
+            onClick={() => setActiveChatId(chat.id)} 
+            className={`w-full p-4 flex items-center gap-3 text-left transition ${activeChatId === chat.id ? "bg-zinc-200 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-900/40"}`}>
 
-              <div className="w-11 h-11 rounded-full bg-zinc-500/10 border border-zinc-500/20 flex items-center justify-center text-xl shrink-0">{chat.name.includes("KI") ? "🤖" : "👨‍💻"}</div>
-
-              <div className="flex-1 min-w-0">
-
-                <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
-
-                <p className="text-xs text-zinc-400 truncate">Klicke zum Öffnen</p>
-
+              <div className="w-11 h-11 rounded-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-xl shrink-0">
+                {chat.name.includes("KI") ? "🤖" : "👨‍💻"}
               </div>
+
+              <h3 className="font-semibold text-sm">{chat.name}</h3>
 
             </button>
 
@@ -396,26 +388,31 @@ export default function RealtimeWhatsAppChat() {
 
         </div>
 
-        <button onClick={openNewChatModal} className={`absolute bottom-6 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-xl transition duration-200 active:scale-90 z-20 border ${isDark ? "bg-zinc-900 border-zinc-800 text-white hover:bg-zinc-800" : "bg-zinc-200 border-zinc-300 text-zinc-900 hover:bg-zinc-300"}`}>➕</button>
-
+        <button 
+          onClick={openNewChatModal} 
+          className="absolute bottom-6 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-xl transition active:scale-90 z-20 bg-zinc-200 border border-zinc-300 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-800"
+        >
+          ➕
+        </button> 
       </div>
 
 
 
       {/* RECHTE SEITE: Chatverlauf */}
 
-      <div className={`flex-1 flex flex-col h-full relative ${!activeChatId && "hidden md:flex"}`}>
+      <div className={`flex-1 flex flex-col h-full relative bg-zinc-50 dark:bg-zinc-950/20 ${!activeChatId && "hidden md:flex"}`}>
 
         {activeChat ? (
 
           <>
 
-            <div className={`px-6 py-3 border-b flex items-center gap-3 z-10 ${isDark ? "bg-zinc-900/80 border-zinc-800" : "bg-white/80 border-zinc-200 shadow-sm"}`}>
+            <div className="px-6 py-3 border-b flex items-center gap-3 z-10 bg-white/80 border-zinc-200 dark:bg-zinc-900/80 dark:border-zinc-800 shadow-sm">
 
               <button onClick={() => setActiveChatId(null)} className="md:hidden text-zinc-400 pr-2 text-xl">←</button>
 
-              <div className="w-10 h-10 rounded-full bg-zinc-500/10 flex items-center justify-center text-xl">{activeChat.name.includes("KI") ? "🤖" : "👨‍💻"}</div>
-
+             <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xl">
+                {activeChat.name.includes("KI") ? "🤖" : "👨‍💻"}
+              </div>
               <div>
 
                 <h2 className="text-sm font-bold tracking-tight">{activeChat.name}</h2>
@@ -426,7 +423,7 @@ export default function RealtimeWhatsAppChat() {
 
             </div>
 
-            <div className={`flex-1 overflow-y-auto px-6 py-6 space-y-3 no-scrollbar ${isDark ? "bg-zinc-950/20" : "bg-zinc-50"}`}>
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3 no-scrollbar bg-zinc-50 dark:bg-zinc-950/20">
 
               {isLoadingMessages ? (
 
@@ -442,7 +439,7 @@ export default function RealtimeWhatsAppChat() {
 
                     <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} animate-fade-in`}>
 
-                      <div className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm ${isMe ? (isDark ? "bg-zinc-800 text-white border border-zinc-700" : "bg-zinc-900 text-white") : (isDark ? "bg-zinc-900 border border-zinc-800/80 text-zinc-100" : "bg-white border border-zinc-200 text-zinc-800")}`}>
+                      <div className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm border ${isMe ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-700 dark:border-zinc-600" : "bg-white border-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"}`}>
 
                         <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
 
@@ -462,13 +459,13 @@ export default function RealtimeWhatsAppChat() {
 
             </div>
 
-            <div className={`p-4 border-t ${isDark ? "bg-zinc-900/60 border-zinc-800" : "bg-white border-zinc-200"}`}>
+            <div className="p-4 border-t bg-white border-zinc-200 dark:bg-zinc-900/60 dark:border-zinc-800">
 
               <form onSubmit={handleSendMessage} className="flex gap-2 max-w-4xl mx-auto w-full">
 
-                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Schreibe eine Nachricht..." className={`flex-1 px-4 py-2.5 rounded-xl text-sm border focus:outline-none focus:ring-1 focus:ring-zinc-500 transition ${isDark ? "bg-zinc-950 border-zinc-800 text-white placeholder-zinc-700" : "bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-400"}`} />
+                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Schreibe eine Nachricht..." className="flex-1 px-4 py-2.5 rounded-xl text-sm border focus:outline-none focus:ring-1 focus:ring-zinc-500 transition bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-400 dark:bg-zinc-950 dark:border-zinc-800 dark:text-white dark:placeholder-zinc-700"/>
 
-                <button type="submit" disabled={!input.trim()} className={`px-5 py-2.5 rounded-xl text-sm font-medium transition ${isDark ? "bg-zinc-800 hover:bg-zinc-700 text-white" : "bg-zinc-900 hover:bg-zinc-800 text-white"}`}>Senden</button>
+                <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium transition bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-800 dark:hover:bg-zinc-700">Senden</button>
 
               </form>
 
@@ -492,19 +489,19 @@ export default function RealtimeWhatsAppChat() {
 
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
 
-          <div className={`w-full max-w-sm rounded-2xl border p-6 shadow-2xl ${isDark ? "bg-zinc-900 border-zinc-800 text-white" : "bg-white border-zinc-200 text-zinc-900"}`}>
+          <div className="w-full max-w-sm rounded-2xl border p-6 shadow-2xl bg-white border-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white">
 
             <div className="flex justify-between items-center mb-4">
 
               <h3 className="font-bold text-base">Neuer Chat</h3>
 
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-current text-lg">✕</button>
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">✕</button>
 
             </div>
 
             <div className="max-h-72 overflow-y-auto space-y-2 no-scrollbar">
 
-              <button onClick={() => startChatWithUser("AIO KI-Assistent")} className={`w-full p-3 flex items-center justify-between rounded-xl text-left transition border ${isDark ? "bg-zinc-850 border-zinc-800 hover:bg-zinc-800" : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100"}`}>
+              <button onClick={() => startChatWithUser("AIO KI-Assistent")} className="w-full p-3 flex items-center justify-between rounded-xl text-left transition border bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/50 dark:border-zinc-800 dark:hover:bg-zinc-800">
 
                 <div className="flex items-center gap-3">
 
@@ -518,11 +515,11 @@ export default function RealtimeWhatsAppChat() {
 
               </button>
 
-              <hr className={isDark ? "border-zinc-800 my-2" : "border-zinc-200 my-2"} />
+              <hr className="border-zinc-200 dark:border-zinc-800 my-2" />
 
               {allUsers.map((user) => (
 
-                <button key={user.id} onClick={() => startChatWithUser(user.username)} className={`w-full p-3 flex items-center gap-3 rounded-xl text-left transition ${isDark ? "hover:bg-zinc-800" : "hover:bg-zinc-100"}`}>
+                <button key={user.id} onClick={() => startChatWithUser(user.username)} className="w-full p-3 flex items-center justify-between rounded-xl text-left transition border bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/50 dark:border-zinc-800 dark:hover:bg-zinc-800">
 
                   <div className="w-10 h-10 rounded-full bg-zinc-500/10 flex items-center justify-center text-xl">👨‍💻</div>
 
