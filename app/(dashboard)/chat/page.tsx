@@ -87,21 +87,21 @@ useEffect(() => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
 
-    // Lade die ID aus der profiles-Tabelle, die zur auth.uid() gehört
+    // --- HIER KOMMT DER NEUE CODE REIN ---
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id")
-      .eq("id", session.user.id) // Falls ID in profiles = auth.uid()
-      // ODER falls du eine eigene ID-Spalte hast:
+      .select("id, username") 
+      .eq("user_uuid", session.user.id) // Prüft die neue Spalte gegen die auth.uid()
       .maybeSingle();
 
     if (profile) {
-      setCurrentUserId(profile.id.toString());
+      // Wir speichern die 'id' (dein bigint) als String für die App-Logik
+      setCurrentUserId(profile.id.toString()); 
     }
+    // -------------------------------------
   };
   initializeChat();
 }, []);
-
 
 
   // 2. Kontakte für das Modal laden
