@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@/lib/useTheme";
+
 import Header from "./components/Header";
 import Background from "./components/Background";
 import { useState } from "react";
