@@ -62,16 +62,18 @@ export default function Header({ open, setOpen }: HeaderProps) {
       </div>
 
       {/* Theme-Toggle */}
-      <button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className="relative w-11 h-6 rounded-full transition-all duration-300 bg-zinc-300 dark:bg-zinc-800 shadow-inner"
-        aria-label="Theme umschalten"
-      >
-        <div 
-          className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-all duration-300 bg-white dark:bg-black 
-          ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} 
-        />
-      </button>
+      {/* Theme-Toggle */}
+{/* Theme-Toggle */}
+<button
+  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+  className="relative w-12 h-6 rounded-full transition-all duration-300 bg-border shadow-inner overflow-hidden border border-border"
+  aria-label="Theme umschalten"
+>
+  <div 
+    className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 bg-foreground 
+    ${theme === "dark" ? "left-7" : "left-1"}`} 
+  />
+</button>
     </header>
   );
 }

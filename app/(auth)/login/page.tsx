@@ -1,27 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { useTheme } from "@/lib/useTheme"; // Theme-Support geladen
+import { useTheme } from "next-themes";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isDark } = useTheme(); // Prüft, ob Hell- oder Dunkelmodus aktiv ist
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  // Formular-States
+  // Verhindert Hydration-Fehler (Button wird erst auf dem Client gerendert)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Status-States
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 1. NORMALER E-MAIL & PASSWORT LOGIN
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-
     if (!email.trim() || !password) {
       setErrorMsg("Bitte fülle alle Felder aus.");
       return;
@@ -29,17 +30,11 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setErrorMsg(error.message);
         return;
       }
-
-      // Erfolgreich? Ab zum Dashboard!
       router.push("/");
     } catch (err) {
       setErrorMsg("Ein unerwarteter Fehler ist aufgetreten.");
@@ -48,36 +43,47 @@ export default function LoginPage() {
     }
   };
 
-  // 2. NEU: HIER IST DER COCH-BEFEHL FÜR GOOGLE OAUTH
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          // Leitet den Nutzer nach dem Google-Login direkt auf deine Hauptseite (Dashboard)
-          redirectTo: `${window.location.origin}`,
-        },
+        options: { redirectTo: `${window.location.origin}` },
       });
-      if (error) {
-        setErrorMsg(`Google-Login fehlgeschlagen: ${error.message}`);
-      }
+      if (error) setErrorMsg(`Google-Login fehlgeschlagen: ${error.message}`);
     } catch (err) {
       console.error("Fehler beim OAuth-Flow:", err);
     }
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center px-4 py-8 transition-colors duration-300
-      ${isDark ? "bg-zinc-950 text-white" : "bg-zinc-50 text-zinc-900"}`}>
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 transition-colors duration-300 bg-background text-foreground">
       
-      <div className={`w-full max-w-md p-8 rounded-2xl border backdrop-blur-xl space-y-6 text-center shadow-xl
-        ${isDark ? "border-zinc-800/80 bg-zinc-900/30" : "border-zinc-200 bg-white/70"}`}>
+      {/* Box Hintergrund und Border */}
+      <div className="w-full max-w-md p-8 rounded-2xl border backdrop-blur-xl space-y-6 text-center shadow-xl border-border bg-card-bg/70">
         
-        <div>
-          <h2 className={`text-2xl font-bold tracking-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-            Anmelden
-          </h2>
-          <p className="text-sm text-zinc-500 mt-1">Logge dich in dein AIO-System ein</p>
+        {/* Header-Bereich: Button oben rechts, Text zentral */}
+        <div className="relative mb-8">
+          {/* Switch-Button absolut oben rechts */}
+          {mounted && (
+            <div className="absolute right-0 -top-2">
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="relative w-11 h-6 rounded-full transition-all duration-300 bg-border border border-border shadow-inner"
+                aria-label="Theme umschalten"
+              >
+                <div 
+                  className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 bg-foreground 
+                  ${theme === "dark" ? "left-6" : "left-1"}`} 
+                />
+              </button>
+            </div>
+          )}
+
+          {/* Text zentral */}
+          <div className="text-center pt-4">
+            <h2 className="text-2xl font-bold tracking-tight">Anmelden</h2>
+            <p className="text-sm text-zinc-500 mt-1">Logge dich in dein AIO-System ein</p>
+          </div>
         </div>
 
         {errorMsg && (
@@ -86,7 +92,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Normales E-Mail Login Formular */}
         <form onSubmit={handleLogin} className="space-y-4 text-left">
           <div className="space-y-3">
             <label className="text-xs font-semibold text-zinc-400 block -mb-1">E-Mail</label>
@@ -95,10 +100,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="deine@email.com" 
-              className={`w-full rounded-xl px-4 py-3 outline-none transition text-sm border
-                ${isDark 
-                  ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600 focus:border-zinc-700" 
-                  : "bg-zinc-100 border-zinc-200 text-zinc-900 placeholder-zinc-400 focus:border-zinc-300"}`}
+              className="w-full rounded-xl px-4 py-3 outline-none transition text-sm border bg-background border-border focus:border-zinc-400 dark:focus:border-zinc-600"
             />
 
             <label className="text-xs font-semibold text-zinc-400 block -mb-1">Passwort</label>
@@ -107,42 +109,30 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••" 
-              className={`w-full rounded-xl px-4 py-3 outline-none transition text-sm border
-                ${isDark 
-                  ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600 focus:border-zinc-700" 
-                  : "bg-zinc-100 border-zinc-200 text-zinc-900 placeholder-zinc-400 focus:border-zinc-300"}`}
+              className="w-full rounded-xl px-4 py-3 outline-none transition text-sm border bg-background border-border focus:border-zinc-400 dark:focus:border-zinc-600"
             />
           </div>
 
           <button 
             type="submit"
             disabled={loading}
-            className={`w-full py-3 font-semibold rounded-xl transition active:scale-[0.98] text-sm disabled:opacity-50 mt-2 shadow-md
-              ${isDark 
-                ? "bg-white text-black hover:bg-zinc-200" 
-                : "bg-black text-white hover:bg-zinc-800"}`}
+            className="w-full py-3 font-semibold rounded-xl transition active:scale-[0.98] text-sm disabled:opacity-50 mt-2 shadow-md bg-foreground text-background hover:opacity-90"
           >
             {loading ? "Wird geprüft..." : "Einloggen"}
           </button>
         </form>
 
-        {/* TRENNELEMENT */}
         <div className="relative flex py-2 items-center">
-          <div className={`flex-grow border-t ${isDark ? "border-zinc-800" : "border-zinc-200"}`}></div>
+          <div className="flex-grow border-t border-border"></div>
           <span className="flex-shrink mx-4 text-zinc-500 text-xs font-medium">oder</span>
-          <div className={`flex-grow border-t ${isDark ? "border-zinc-800" : "border-zinc-200"}`}></div>
+          <div className="flex-grow border-t border-border"></div>
         </div>
 
-        {/* 3. GOOGLE BUTTON JETZT MIT ONCLICK VERKNÜPFT */}
         <button
           type="button"
-          onClick={handleGoogleLogin} // <-- HIER WIRD DIE FUNKTION AUSGELÖST
-          className={`w-full py-3 rounded-xl border font-medium text-sm transition active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm
-            ${isDark 
-              ? "bg-zinc-900/50 border-zinc-800 text-white hover:bg-zinc-800" 
-              : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"}`}
+          onClick={handleGoogleLogin}
+          className="w-full py-3 rounded-xl border font-medium text-sm transition active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm bg-card-bg border-border hover:bg-zinc-100 dark:hover:bg-zinc-800"
         >
-          {/* Ein kleines Google-Icon aus Textzeichen oder ein passendes Emoji */}
           <span className="font-bold text-base">G</span> Mit Google anmelden
         </button>
 
@@ -150,7 +140,7 @@ export default function LoginPage() {
           Noch kein Konto?{" "}
           <button 
             onClick={() => router.push("/register")} 
-            className={`font-medium hover:underline ${isDark ? "text-white" : "text-black"}`}
+            className="font-medium hover:underline text-foreground"
           >
             Hier registrieren
           </button>

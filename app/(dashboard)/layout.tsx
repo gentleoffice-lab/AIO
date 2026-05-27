@@ -24,8 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen overflow-x-hidden transition-colors duration-300 bg-background text-foreground">
       
 
-      {/* Header und andere Komponenten können isDark weiterhin für logische Zwecke nutzen, 
-          aber das Layout selbst muss sich nicht mehr per Ternary ändern */}
+     
 <Header open={open} setOpen={setOpen} />
       <main className="container mx-auto p-6">
         {children}

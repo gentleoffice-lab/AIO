@@ -57,7 +57,7 @@ interface Profile {
 
 export default function RealtimeWhatsAppChat() {
 
-  const { isDark } = useTheme();
+ 
 
   const [chats, setChats] = useState<Chat[]>([]);
 
@@ -81,75 +81,26 @@ export default function RealtimeWhatsAppChat() {
 
 
 
-  // 1. Initialisierung & Profile / Chats holen
+  // 1. Initialisierung
+useEffect(() => {
+  const initializeChat = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
 
-  useEffect(() => {
+    // Lade die ID aus der profiles-Tabelle, die zur auth.uid() gehört
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", session.user.id) // Falls ID in profiles = auth.uid()
+      // ODER falls du eine eigene ID-Spalte hast:
+      .maybeSingle();
 
-    const initializeChat = async () => {
-
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session?.user) return;
-
-
-
-      const authUserId = session.user.id;
-
-      setCurrentUserId(authUserId);
-
-
-
-      // Versuche Profil über die Spalte zu holen, falls dort der String steht
-
-      // Hinweis: Wenn id ein int8 ist, schlägt .eq("id", string) fehl. 
-
-      // Wir fangen das ab, damit die App trotzdem die Chats lädt.
-
-      try {
-
-        const { data: profileData } = await supabase
-
-          .from("profiles")
-
-          .select("*")
-
-          .eq("username", session.user.user_metadata?.username || session.user.email?.split("@")[0])
-
-          .maybeSingle();
-
-
-
-        console.log("Profil-Abgleich über Username:", profileData);
-
-      } catch (err) {
-
-        console.warn("Profilabfrage übersprungen wegen Typen-Konflikt in der DB.");
-
-      }
-
-
-
-      // Chats werden unabhängig von Profil-Tabellenfehlern geladen
-
-      const { data: chatsData } = await supabase
-
-        .from("chats")
-
-        .select("*")
-
-        .order("updated_at", { ascending: false });
-
-
-
-      if (chatsData) setChats(chatsData as Chat[]);
-
-    };
-
-
-
-    initializeChat();
-
-  }, []);
+    if (profile) {
+      setCurrentUserId(profile.id.toString());
+    }
+  };
+  initializeChat();
+}, []);
 
 
 
@@ -180,61 +131,56 @@ export default function RealtimeWhatsAppChat() {
   // 3. Chat starten oder öffnen
 
   const startChatWithUser = async (username: string) => {
+  setIsModalOpen(false);
+  if (!currentUserId) return;
 
-    setIsModalOpen(false);
+  const isAI = username === "AIO KI-Assistent";
 
-    if (!currentUserId) return;
+  try {
+    // 1. Suche nach dem Chat
+    // Für die KI suchen wir nach dem Namen, für User nach Name + UserID
+    let query = supabase.from("chats").select("*").eq("name", username);
+    
+    if (!isAI) {
+      query = query.eq("created_by", currentUserId);
+    }
+    
+    const { data: existing } = await query.maybeSingle();
 
-
-
-    try {
-
-      const { data: existing } = await supabase
-  .from("chats")
-  .select("*")
-  .match({ name: username, created_by: currentUserId })
-  .maybeSingle();
-
-
-
-      if (existing) {
-
-        setActiveChatId(existing.id);
-
-        return;
-
-      }
-
-
-
-      const { data: newChat } = await supabase
-
-        .from("chats")
-
-        .insert({ name: username, is_group: false, created_by: currentUserId })
-
-        .select()
-
-        .single();
-
-
-
-      if (newChat) {
-
-        setChats(prev => [newChat as Chat, ...prev]);
-
-        setActiveChatId(newChat.id);
-
-      }
-
-    } catch (err) {
-
-      console.error("Fehler im Chat-Handshake:", err);
-
+    if (existing) {
+      setActiveChatId(existing.id);
+      return;
     }
 
-  };
+    // 2. Erstelle den Chat
+    // Wir setzen jetzt IMMER ein created_by, um den NOT NULL Fehler zu verhindern.
+    // Wenn KI, dann '0', sonst die echte ID.
+    const insertPayload = { 
+      name: username, 
+      is_group: false, 
+      created_by: isAI ? 1 : Number(currentUserId) // Hier die 0 für KI
+    };
 
+    const { data: newChat, error } = await supabase
+      .from("chats")
+      .insert(insertPayload)
+      .select()
+      .single();
+
+    if (error) {
+      // WICHTIG: Jetzt sehen wir den echten Fehler, falls es noch einen gibt!
+      console.error("Supabase Insert Details:", JSON.stringify(error, null, 2));
+      return;
+    }
+
+    if (newChat) {
+      setChats(prev => [newChat as Chat, ...prev]);
+      setActiveChatId(newChat.id);
+    }
+  } catch (err) {
+    console.error("Fehler im Chat-Handshake:", err);
+  }
+};
 
 
   // 4. Realtime Nachrichten-Handling

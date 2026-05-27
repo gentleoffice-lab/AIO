@@ -28,7 +28,7 @@ const AndroidQrIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 );
 
 export default function DashboardOverview() {
-  const { isDark } = useTheme();
+  
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
