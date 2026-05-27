@@ -63,21 +63,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Main</p>
             <SidebarLink href="/" label="Dashboard" close={() => setOpen(false)} />
             <SidebarLink href="/chat" label="Chat" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Games" label="Games" close={() => setOpen(false)} />
+            <SidebarLink href="/Games" label="Games" close={() => setOpen(false)} />
           </div>
            <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Tools</p>
             <SidebarLink href="/calender" label="Kalender" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Tfzf Trainer" label="Tfzf Trainer" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Rechner" label="Rechner" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Notizen" label="Notizen" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Upload" label="Upload" close={() => setOpen(false)} />
+            <SidebarLink href="/tfzf-trainer" label="Tfzf Trainer" close={() => setOpen(false)} />
+            <SidebarLink href="/components/calculator" label="Rechner" close={() => setOpen(false)} />
+            <SidebarLink href="/notes" label="Notizen" close={() => setOpen(false)} />
+            
             <SidebarLink href="/pdfscanner" label="PDF Scannen" close={() => setOpen(false)} />
           </div>
           <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Optionen</p>
-            <SidebarLink href="/components/Einstellungen" label="Einstellungen" close={() => setOpen(false)} />
-            <SidebarLink href="/components/Impressum" label="Impressum" close={() => setOpen(false)} />
+            <SidebarLink href="/components/useroptions" label="Einstellungen" close={() => setOpen(false)} />
+            
           </div>
         </nav>
       </aside>
