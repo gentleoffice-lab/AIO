@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
            <div className="space-y-4">
             <p className="text-zinc-500 uppercase text-xs tracking-[0.25em]">Tools</p>
             <SidebarLink href="/calender" label="Kalender" close={() => setOpen(false)} />
-            <SidebarLink href="/tfzf-trainer" label="Tfzf Trainer" close={() => setOpen(false)} />
+            <SidebarLink href="/tfzftrainer" label="Tfzf Trainer" close={() => setOpen(false)} />
             <SidebarLink href="/components/calculator" label="Rechner" close={() => setOpen(false)} />
             <SidebarLink href="/notes" label="Notizen" close={() => setOpen(false)} />
             
