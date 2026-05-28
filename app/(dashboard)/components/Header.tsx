@@ -32,7 +32,7 @@ export default function Header({ open, setOpen }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 backdrop-blur-xl border-b bg-white/60 border-zinc-300 dark:bg-black/60 dark:border-zinc-800 transition-colors duration-300">
+    <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 border-b bg-white border-zinc-300 dark:bg-black dark:border-zinc-800">
       
       {/* Menü-Button */}
       <button 
