@@ -16,10 +16,10 @@ export default function RootLayout({
     <html lang="de" suppressHydrationWarning>
       <body className="bg-[var(--background)] text-[var(--foreground)]">
         <ThemeProvider 
-  attribute="class" 
-  defaultTheme="system" 
-  enableSystem 
-  disableTransitionOnChange // Auch hier ergänzen, falls du props weitergibst
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+            disableTransitionOnChange
 >
   {children}
 </ThemeProvider>
