@@ -7,18 +7,14 @@ export const metadata = {
   description: "Zentrales Dashboard",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" suppressHydrationWarning>
       <body className="bg-[var(--background)] text-[var(--foreground)]">
         <ThemeProvider 
             attribute="class"
             defaultTheme="dark"
-            enableSystem={false}
+            enableSystem
             disableTransitionOnChange
 >
   {children}
