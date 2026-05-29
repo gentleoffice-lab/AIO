@@ -1,36 +1,42 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
-export default function EventModal({ isOpen, onClose, onSave, defaultDate, defaultTime }: any) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(defaultDate || "");
-  const [time, setTime] = useState(defaultTime || "");
+export default function EventModal({ isOpen, onClose, onSave, defaultDate, defaultTime }) {
+  const [formData, setFormData] = useState({
+    title: "",
+    start_time: defaultDate && defaultTime ? `${defaultDate}T${defaultTime}` : "",
+    duration_minutes: 30,
+    is_all_day: false,
+    description: ""
+  });
 
-  // Update bei Klick in Zelle
+  const modalRef = useRef(null);
+
   useEffect(() => {
-    setDate(defaultDate);
-    setTime(defaultTime);
-  }, [defaultDate, defaultTime]);
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) onClose();
+    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-card-bg p-6 rounded-2xl w-full max-w-sm border border-border">
-        <h3 className="text-xl font-bold mb-4">Neuer Termin</h3>
-        <input placeholder="Titel" className="w-full p-2 mb-3 bg-background border rounded" onChange={(e) => setTitle(e.target.value)} />
-        <input type="date" value={date} className="w-full p-2 mb-3 bg-background border rounded" onChange={(e) => setDate(e.target.value)} />
-        <input type="time" value={time} className="w-full p-2 mb-4 bg-background border rounded" onChange={(e) => setTime(e.target.value)} />
-        
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 hover:bg-border rounded">Abbrechen</button>
-          <button 
-            onClick={() => onSave({ title, startTime: `${date}T${time}:00Z`, duration: 30 })} 
-            className="px-4 py-2 bg-foreground text-background rounded"
-          >
-            Speichern
-          </button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div ref={modalRef} className="bg-zinc-900 border border-zinc-700 p-8 rounded-3xl w-full max-w-sm shadow-2xl text-zinc-100">
+        <h3 className="text-2xl font-bold mb-6">Neuer Termin</h3>
+        <div className="space-y-4">
+          <input placeholder="Titel" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+            onChange={e => setFormData({...formData, title: e.target.value})} />
+          <input type="datetime-local" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+            value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} />
+          <input type="number" placeholder="Dauer (Minuten)" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+            value={formData.duration_minutes} onChange={e => setFormData({...formData, duration_minutes: parseInt(e.target.value) || 0})} />
         </div>
+        <button onClick={() => onSave(formData)} className="w-full mt-8 py-3 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition">
+          Speichern
+        </button>
       </div>
     </div>
   );

@@ -1,53 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { 
-  format, startOfWeek, endOfWeek, eachDayOfInterval, getHours, 
-  startOfMonth, endOfMonth, isSameDay, isToday
-} from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, getHours, startOfMonth, endOfMonth, isSameDay, isToday} from "date-fns";
 import { de } from "date-fns/locale";
 import EventModal from "../components/EventModal";
 
+
+
+
 export default function KalenderPage() {
-  const [view, setView] = useState("week"); // Default: Woche
+  const [view, setView] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState({ date: "", time: "" });
- // Ersetze deine isWeekend Zeile durch diese beiden:
-const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
-// Wichtig: Wir vergleichen ohne Uhrzeit (auf Mitternacht setzen)
-const isTodayDate = (date: Date) => isToday(date);
-const isDateToday = (date: Date) => {
-  const today = new Date();
-  return date.getDate() === today.getDate() &&
-         date.getMonth() === today.getMonth() &&
-         date.getFullYear() === today.getFullYear();
-};
+  
+  // Die Referenz für den Scroll-Container
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Initialisierung: User laden und Events abrufen
+  // Hilfsfunktionen
+  const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+  
+  const isDateToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
+
+  // Scroll-Effekt: Springt bei Ansichtswechsel auf 8:00 Uhr
+  useEffect(() => {
+    if (view !== 'month' && scrollRef.current) {
+      scrollRef.current.scrollTop = 8 * 80; 
+    }
+  }, [view]);
+
+  // Daten laden (dein bestehender Code)
   useEffect(() => {
     async function loadData() {
-     const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // 2. Profil aus deiner Tabelle 'profiles' laden
-        const { data } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, avatar_url')
-          .eq('id', user.id) // Verknüpfung über die ID
-          .single();
+        const { data } = await supabase.from('profiles').select('first_name, last_name, avatar_url').eq('id', user.id).single();
         if (data) setProfile(data);
       }
-      // 2. Events laden
       const { data } = await supabase.from('calendar_events').select('*');
       if (data) setEvents(data);
     }
     loadData();
   }, []);
 
-  // 2. Dynamische Datumsberechnung
   const getDays = () => {
     if (view === "day") return [currentDate];
     if (view === "month") return eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
@@ -55,7 +58,7 @@ const isDateToday = (date: Date) => {
   };
 
   const days = getDays();
-  const hours = Array.from({ length: 24 }, (_, i) => i + 8);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
   
   // Grid-Spalten Logik
   const gridTemplate = view === 'month' ? 'grid-cols-7' : view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]';
@@ -95,13 +98,13 @@ const isDateToday = (date: Date) => {
             )}
           </div>
         </div>
-
-
       </div>
 
-      {/* Grid */}
-      {/* Grid */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory">
+
+      <div 
+          ref={scrollRef}
+          className="flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory"
+          >
         <div 
           className={`grid ${view === 'month' ? 'grid-cols-7' : (view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]')} border-t border-l border-border`}
           style={{ minWidth: view === 'week' ? '800px' : 'auto' }}
@@ -202,15 +205,42 @@ const isDateToday = (date: Date) => {
         onClose={() => setIsModalOpen(false)}
         defaultDate={selectedCell.date}
         defaultTime={selectedCell.time}
-        onSave={async (data: any) => {
-          const { error } = await supabase.from('calendar_events').insert([{
-            title: data.title,
-            start_time: data.startTime,
-            duration_minutes: 30,
-            calendar_id: 1
-          }]);
-          if (!error) window.location.reload();
-        }}
+        
+
+
+       onSave={async (data: any) => {
+  try {
+    // 1. Sicherheit: Datum prüfen
+    if (!data.start_time) throw new Error("Startzeit ist erforderlich!");
+    
+    const startTimeDate = new Date(data.start_time);
+    if (isNaN(startTimeDate.getTime())) throw new Error("Ungültiges Datum.");
+
+    // 2. Berechnung: Endzeit basierend auf Dauer
+    const duration = data.duration_minutes || 30;
+    const end_time = new Date(startTimeDate.getTime() + (duration * 60000));
+
+    // 3. Insert
+    const { error } = await supabase.from('calendar_events').insert([{
+      calendar_id: 1, 
+      title: data.title,
+      start_time: startTimeDate.toISOString(),
+      end_time: end_time.toISOString(),
+      duration_minutes: duration,
+      description: data.description || ""
+    }]);
+
+    if (error) throw error;
+    setIsModalOpen(false);
+    window.location.reload();
+  } catch (err) {
+    alert(err instanceof Error ? err.message : "Fehler!");
+  }
+}}
+
+
+
+
       />
     </div> /* Schließt das Haupt-Div */
   );
