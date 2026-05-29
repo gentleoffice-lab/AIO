@@ -1,6 +1,6 @@
 "use client";
 
-
+import { useTheme } from "next-themes";
 import Header from "./components/Header";
 import Background from "./components/Background";
 import { useState } from "react";
@@ -18,6 +18,7 @@ function SidebarLink({ href, label, close }: { href: string; label: string; clos
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   
   const [open, setOpen] = useState(false);
+  const { theme } = useTheme();
 
   return (
     // Wir nutzen hier nur noch native Klassen. Das "dark" Attribut auf html steuert alles.
@@ -36,25 +37,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       />
       
       <aside className={`fixed top-0 left-0 z-40 h-full w-[300px] transition-transform duration-500 ${open ? "translate-x-0" : "-translate-x-full"} bg-card-bg/95 text-foreground border-border backdrop-blur-2xl border-r shadow-2xl flex flex-col`}>
-       
+
         <div className="relative p-6 flex justify-center border-b border-inherit">
           <button onClick={() => setOpen(false)} className="absolute left-4 top-1/2 -translate-y-1/2">✕</button>
           {/* Logo-Tausch: Hier ist eine Bedingung noch sinnvoll, wenn du zwei Dateien hast */}
           {/* Logo-Tausch per CSS-Klassen statt JavaScript-Bedingung */}
-            <div className="relative w-[100px] h-[100px]">
-              <Image 
-                src="/logo_light.png" 
-                alt="AIO" 
-                fill 
-                className="block dark:hidden object-contain" 
-              />
-              <Image 
-                src="/logo_dark.png" 
-                alt="AIO" 
-                fill 
-                className="hidden dark:block object-contain" 
-              />
-            </div>
+            {/* Logo-Tausch per Logik statt CSS-Klassen */}
+        <div className="relative w-[100px] h-[100px]">
+          <Image 
+            // Hier entscheiden wir fest: Ist theme 'dark', nimm das dark-logo. Sonst das light-logo.
+            src={theme === "dark" ? "/logo_dark.png" : "/logo_light.png"} 
+            alt="AIO" 
+            fill 
+            className="object-contain" 
+          />
+        </div>
         </div>
 
         <nav className="flex-1 p-8 space-y-10 overflow-y-auto no-scrollbar">
