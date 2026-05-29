@@ -297,194 +297,113 @@ if (profile) {
 
   return (
 
-    <div className="h-[calc(100vh-65px)] w-full flex overflow-hidden relative bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:bg-zinc-950 dark:text-white transition-colors duration-300">
-
+    <div className="h-[calc(100vh-65px)] w-full flex overflow-hidden relative bg-background text-foreground transition-colors duration-300">
+      
       {/* LINKSEITE: Chat-Liste */}
-
-      <div className={`w-full md:w-80 flex flex-col border-r h-full shrink-0 relative bg-white dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 ${activeChatId ? "hidden md:flex" : "flex"}`}>
-
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-
+      <div className={`w-full md:w-80 flex flex-col border-r h-full shrink-0 relative bg-card-bg border-border ${activeChatId ? "hidden md:flex" : "flex"}`}>
+        
+        <div className="p-4 border-b border-border flex items-center justify-between">
           <span className="text-xl select-none">💬</span>
-
           <h2 className="font-bold text-base tracking-tight text-right flex-1">Chats</h2>
-
         </div>
 
-       <div className="flex-1 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800 no-scrollbar pb-24">
-
+       <div className="flex-1 overflow-y-auto divide-y divide-border no-scrollbar pb-24">
           {chats.map((chat) => (
-
             <button 
             key={chat.id} 
             onClick={() => setActiveChatId(chat.id)} 
-            className={`w-full p-4 flex items-center gap-3 text-left transition ${activeChatId === chat.id ? "bg-zinc-200 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-900/40"}`}>
-
-              <div className="w-11 h-11 rounded-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-xl shrink-0">
+            className={`w-full p-4 flex items-center gap-3 text-left transition ${activeChatId === chat.id ? "bg-border" : "hover:bg-card-bg/80"}`}>
+              <div className="w-11 h-11 rounded-full bg-border border border-border flex items-center justify-center text-xl shrink-0">
                 {chat.name.includes("KI") ? "🤖" : "👨‍💻"}
               </div>
-
-              <h3 className="font-semibold text-sm">{chat.name}</h3>
-
+              <h3 className="font-semibold text-sm text-foreground">{chat.name}</h3>
             </button>
-
           ))}
-
-          {chats.length === 0 && <p className="text-xs text-zinc-500 text-center pt-8 px-4">Noch keine aktiven Chats. Klicke unten auf das Plus!</p>}
-
+          {chats.length === 0 && <p className="text-xs text-zinc-500 text-center pt-8 px-4">Noch keine aktiven Chats.</p>}
         </div>
 
         <button 
           onClick={openNewChatModal} 
-          className="absolute bottom-6 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-xl transition active:scale-90 z-20 bg-zinc-200 border border-zinc-300 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:hover:bg-zinc-800"
+          className="absolute bottom-6 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-xl transition active:scale-90 z-20 bg-card-bg border border-border text-foreground hover:bg-border"
         >
           ➕
         </button> 
       </div>
 
-
-
       {/* RECHTE SEITE: Chatverlauf */}
-
-      <div className={`flex-1 flex flex-col h-full relative bg-zinc-50 dark:bg-zinc-950/20 ${!activeChatId && "hidden md:flex"}`}>
-
+     <div className={`flex-1 flex flex-col h-full relative bg-background ${!activeChatId && "hidden md:flex"}`}>
+      
         {activeChat ? (
-
           <>
-
-            <div className="px-6 py-3 border-b flex items-center gap-3 z-10 bg-white/80 border-zinc-200 dark:bg-zinc-900/80 dark:border-zinc-800 shadow-sm">
-
+            <div className="px-6 py-3 border-b flex items-center gap-3 z-10 bg-card-bg/90 border-border shadow-sm">
               <button onClick={() => setActiveChatId(null)} className="md:hidden text-zinc-400 pr-2 text-xl">←</button>
-
-             <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-xl">
+             <div className="w-10 h-10 rounded-full bg-border flex items-center justify-center text-xl">
                 {activeChat.name.includes("KI") ? "🤖" : "👨‍💻"}
               </div>
               <div>
-
-                <h2 className="text-sm font-bold tracking-tight">{activeChat.name}</h2>
-
-                <p className="text-[10px] text-zinc-400">{activeChat.name.includes("KI") ? "KI-Assistent" : "Online"}</p>
-
+                <h2 className="text-sm font-bold tracking-tight text-foreground">{activeChat.name}</h2>
+                <p className="text-[10px] text-zinc-500">{activeChat.name.includes("KI") ? "KI-Assistent" : "Online"}</p>
               </div>
-
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3 no-scrollbar bg-zinc-50 dark:bg-zinc-950/20">
-
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3 no-scrollbar bg-background">
               {isLoadingMessages ? (
-
                 <div className="text-center text-xs text-zinc-500 py-4">Nachrichten werden geladen...</div>
-
               ) : (
-
                 messages.map((msg) => {
-
                   const isMe = msg.sender_id === currentUserId;
-
                   return (
-
                     <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"} animate-fade-in`}>
-
-                      <div className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm border ${isMe ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-700 dark:border-zinc-600" : "bg-white border-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"}`}>
-
+                      <div className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm border ${isMe ? "bg-foreground text-background border-foreground" : "bg-card-bg border-border text-foreground"}`}>
                         <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-
                         <span className="text-[9px] block text-right mt-1 opacity-50 font-mono">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-
                       </div>
-
                     </div>
-
                   );
-
                 })
-
               )}
-
               <div ref={messagesEndRef} />
-
             </div>
 
-            <div className="p-4 border-t bg-white border-zinc-200 dark:bg-zinc-900/60 dark:border-zinc-800">
-
+            <div className="p-4 border-t bg-card-bg border-border">
               <form onSubmit={handleSendMessage} className="flex gap-2 max-w-4xl mx-auto w-full">
-
-                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Schreibe eine Nachricht..." className="flex-1 px-4 py-2.5 rounded-xl text-sm border focus:outline-none focus:ring-1 focus:ring-zinc-500 transition bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-400 dark:bg-zinc-950 dark:border-zinc-800 dark:text-white dark:placeholder-zinc-700"/>
-
-                <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium transition bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-800 dark:hover:bg-zinc-700">Senden</button>
-
+                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Schreibe eine Nachricht..." className="flex-1 px-4 py-2.5 rounded-xl text-sm border focus:outline-none focus:ring-1 focus:ring-zinc-500 transition bg-background border-border text-foreground placeholder-zinc-500"/>
+                <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium transition bg-foreground text-background hover:opacity-90">Senden</button>
               </form>
-
             </div>
-
           </>
-
         ) : (
-
-          <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm p-6 text-center">Wähle links einen Kontakt aus oder erstelle einen neuen Chat!</div>
-
+          <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm p-6 text-center">Wähle links einen Kontakt aus oder erstelle einen neuen Chat!</div>
         )}
-
       </div>
 
-
-
       {/* MODAL */}
-
       {isModalOpen && (
-
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-
-          <div className="w-full max-w-sm rounded-2xl border p-6 shadow-2xl bg-white border-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white">
-
+          <div className="w-full max-w-sm rounded-2xl border p-6 shadow-2xl bg-card-bg border-border text-foreground">
             <div className="flex justify-between items-center mb-4">
-
               <h3 className="font-bold text-base">Neuer Chat</h3>
-
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">✕</button>
-
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-foreground">✕</button>
             </div>
-
             <div className="max-h-72 overflow-y-auto space-y-2 no-scrollbar">
-
-              <button onClick={() => startChatWithUser("AIO KI-Assistent")} className="w-full p-3 flex items-center justify-between rounded-xl text-left transition border bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/50 dark:border-zinc-800 dark:hover:bg-zinc-800">
-
+              <button onClick={() => startChatWithUser("AIO KI-Assistent")} className="w-full p-3 flex items-center justify-between rounded-xl text-left transition border bg-background border-border hover:bg-border">
                 <div className="flex items-center gap-3">
-
-                  <div className="w-10 h-10 rounded-full bg-zinc-500/10 flex items-center justify-center text-xl">🤖</div>
-
+                  <div className="w-10 h-10 rounded-full bg-border flex items-center justify-center text-xl">🤖</div>
                   <div className="font-semibold text-sm">AIO KI-Assistent</div>
-
                 </div>
-
-                <span className="text-[10px] bg-zinc-500/20 px-1.5 py-0.5 rounded text-zinc-400 font-mono">System</span>
-
+                <span className="text-[10px] bg-border px-1.5 py-0.5 rounded text-zinc-500 font-mono">System</span>
               </button>
-
-              <hr className="border-zinc-200 dark:border-zinc-800 my-2" />
-
+              <hr className="border-border my-2" />
               {allUsers.map((user) => (
-
-                <button key={user.id} onClick={() => startChatWithUser(user.username)} className="w-full p-3 flex items-center justify-between rounded-xl text-left transition border bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/50 dark:border-zinc-800 dark:hover:bg-zinc-800">
-
-                  <div className="w-10 h-10 rounded-full bg-zinc-500/10 flex items-center justify-center text-xl">👨‍💻</div>
-
+                <button key={user.id} onClick={() => startChatWithUser(user.username)} className="w-full p-3 flex items-center justify-between rounded-xl text-left transition border bg-background border-border hover:bg-border">
+                  <div className="w-10 h-10 rounded-full bg-border flex items-center justify-center text-xl">👨‍💻</div>
                   <div className="font-medium text-sm">{user.username}</div>
-
                 </button>
-
               ))}
-
-              {allUsers.length === 0 && <p className="text-xs text-zinc-500 text-center py-4">Keine weiteren Benutzer registriert.</p>}
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </div>
 
   );
