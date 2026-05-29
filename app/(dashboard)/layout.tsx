@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import Header from "./components/Header";
 import Background from "./components/Background";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,7 +18,11 @@ function SidebarLink({ href, label, close }: { href: string; label: string; clos
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const { theme } = useTheme();
-
+  const [mounted, setMounted] = useState(false);
+  // Erst wenn die Komponente im Browser geladen ist, auf true setzen
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     // Wir nutzen hier nur noch native Klassen. Das "dark" Attribut auf html steuert alles.
     <div className="min-h-screen overflow-x-hidden transition-colors duration-300 bg-background text-foreground">
@@ -39,18 +43,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
        
         <div className="relative p-6 flex justify-center border-b border-inherit">
           <button onClick={() => setOpen(false)} className="absolute left-4 top-1/2 -translate-y-1/2">✕</button>
-          {/* Logo-Tausch: Hier ist eine Bedingung noch sinnvoll, wenn du zwei Dateien hast */}
-          {/* Logo-Tausch per CSS-Klassen statt JavaScript-Bedingung */}
-            {/* Logo-Tausch per Logik statt CSS-Klassen */}
-<div className="relative w-[100px] h-[100px]">
-  <Image 
-    // Wir fragen direkt den 'theme'-Status ab, nicht den CSS-Modus
-    src={theme === "dark" ? "/logo_dark.png" : "/logo_light.png"} 
-    alt="AIO" 
-    fill 
-    className="object-contain" 
-  />
-</div>
+          
+          
+
+            <div className="relative w-[100px] h-[100px]">
+              {mounted ? (
+                <Image 
+                  src={theme === "dark" ? "/logo_dark.png" : "/logo_light.png"} 
+                  alt="AIO" 
+                  fill 
+                  className="object-contain"
+                />
+              ) : (
+                // Ein Platzhalter, der beim ersten Laden angezeigt wird (verhindert das Flackern)
+                <div className="w-[100px] h-[100px]" /> 
+              )}
+            </div>
+
+            
         </div>
 
         <nav className="flex-1 p-8 space-y-10 overflow-y-auto no-scrollbar">

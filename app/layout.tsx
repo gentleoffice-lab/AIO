@@ -9,16 +9,18 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
+    // suppressHydrationWarning ist hier essenziell!
     <html lang="de" suppressHydrationWarning>
-      <body className="bg-[var(--background)] text-[var(--foreground)]">
-        <ThemeProvider 
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
->
-  {children}
-</ThemeProvider>
+      <head /> 
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

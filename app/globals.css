@@ -5,14 +5,20 @@
   --color-foreground: var(--foreground);
   --color-card-bg: var(--card-bg);
   --color-border: var(--border);
+  --color-muted: hsl(var(--muted));   /* WICHTIG: Hinzufügen */
+  --color-accent: hsl(var(--accent)); /* WICHTIG: Hinzufügen */
 }
 
 @layer base {
   :root {
+    --primary: 217 91% 60%;
     --background: #f5f5f4;
     --foreground: #09090b;
     --card-bg: #ffffff;
     --border: #e4e4e7;
+    /* Ergänzung für Wochenende & Akzente */
+    --muted: 240 5% 20%;      /* Helles Grau für Wochenende (Light) */
+    --accent: 240 5% 85%;     /* Etwas dunkleres Grau für Hover (Light) */
   }
 
   .dark {
@@ -20,6 +26,13 @@
     --foreground: #fafafa;
     --card-bg: #09090b;
     --border: #27272a;
+    
+    /* Deutlicher Kontrast für das Wochenende */
+    --muted: #585858;      /* Dunkles Grau, aber etwas heller als der Hintergrund */
+    
+    /* Deutlicher Kontrast für Heute */
+    --primary: 217 91% 60%; 
+    --accent: 240 4% 20%;     
   }
 
   /* Hier setzen wir den Anker für die Darstellung */

@@ -4,95 +4,214 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { 
   format, startOfWeek, endOfWeek, eachDayOfInterval, getHours, 
-  startOfMonth, endOfMonth, isSameDay, isToday 
+  startOfMonth, endOfMonth, isSameDay, isToday
 } from "date-fns";
 import { de } from "date-fns/locale";
 import EventModal from "../components/EventModal";
 
 export default function KalenderPage() {
-  const [view, setView] = useState("week");
+  const [view, setView] = useState("week"); // Default: Woche
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState({ date: "", time: "" });
+ // Ersetze deine isWeekend Zeile durch diese beiden:
+const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+// Wichtig: Wir vergleichen ohne Uhrzeit (auf Mitternacht setzen)
+const isTodayDate = (date: Date) => isToday(date);
+const isDateToday = (date: Date) => {
+  const today = new Date();
+  return date.getDate() === today.getDate() &&
+         date.getMonth() === today.getMonth() &&
+         date.getFullYear() === today.getFullYear();
+};
 
- const handleCellClick = (day: Date, hour: number) => {
+  // 1. Initialisierung: User laden und Events abrufen
+  useEffect(() => {
+    async function loadData() {
+     const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // 2. Profil aus deiner Tabelle 'profiles' laden
+        const { data } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, avatar_url')
+          .eq('id', user.id) // Verknüpfung über die ID
+          .single();
+        if (data) setProfile(data);
+      }
+      // 2. Events laden
+      const { data } = await supabase.from('calendar_events').select('*');
+      if (data) setEvents(data);
+    }
+    loadData();
+  }, []);
+
+  // 2. Dynamische Datumsberechnung
+  const getDays = () => {
+    if (view === "day") return [currentDate];
+    if (view === "month") return eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
+    return eachDayOfInterval({ start: startOfWeek(currentDate, { weekStartsOn: 1 }), end: endOfWeek(currentDate, { weekStartsOn: 1 }) });
+  };
+
+  const days = getDays();
+  const hours = Array.from({ length: 24 }, (_, i) => i + 8);
+  
+  // Grid-Spalten Logik
+  const gridTemplate = view === 'month' ? 'grid-cols-7' : view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]';
+
+  const handleCellClick = (day: Date, hour?: number) => {
     setSelectedCell({
       date: format(day, "yyyy-MM-dd"),
-      time: `${hour.toString().padStart(2, '0')}:00`
+      time: hour ? `${hour.toString().padStart(2, '0')}:00` : "09:00"
     });
     setIsModalOpen(true);
   };
-  const getDays = () => {
-    if (view === "day") return [currentDate];
-    if (view === "month") {
-      return eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
-    }
-    return eachDayOfInterval({ 
-      start: startOfWeek(currentDate, { weekStartsOn: 1 }), 
-      end: endOfWeek(currentDate, { weekStartsOn: 1 }) 
-    });
-  };
-  const days = getDays();
-  const hours = Array.from({ length: 12 }, (_, i) => i + 8);
-
-  // Hilfsfunktion: Ist Tag Wochenende?
-  const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
   return (
-    // Haupt-Hintergrund etwas heller als reines Schwarz (zinc-950)
-    <div className="flex flex-col h-screen bg-zinc-950 text-zinc-100">
-      
-      {/* Header - Etwas heller (zinc-900) */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900">
-        <h2 className="text-xl font-bold capitalize">{format(currentDate, "MMMM yyyy", { locale: de })}</h2>
+    <div className="flex flex-col h-screen bg-background text-foreground transition-colors duration-300">
+
+      {/* Header mit dynamischen Farben */}
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card-bg shrink-0">
+        <h2 className="text-xl font-bold">{format(currentDate, "MMMM yyyy", { locale: de })}</h2>
         <div className="flex items-center gap-4">
-          <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 border border-zinc-700 rounded text-sm hover:bg-zinc-800">Heute</button>
-          <select value={view} onChange={(e) => setView(e.target.value)} className="bg-zinc-800 border border-zinc-700 p-1 rounded text-sm">
-            <option value="week">Woche</option>
+          {profile && <span className="text-sm font-medium">Hallo, {profile.first_name}</span>}
+          
+          <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 border border-border rounded text-sm hover:bg-accent hover:text-accent-foreground">
+            Heute
+          </button>
+          
+          <select value={view} onChange={(e) => setView(e.target.value)} className="bg-background border border-border p-1 rounded text-sm">
             <option value="day">Tag</option>
+            <option value="week">Woche</option>
             <option value="month">Monat</option>
           </select>
+
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground shadow-lg overflow-hidden">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span>{profile ? `${(profile.first_name?.[0] || "")}${(profile.last_name?.[0] || "")}`.toUpperCase() : "JD"}</span>
+            )}
+          </div>
         </div>
+
+
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className={`grid ${view === 'month' ? 'grid-cols-7' : (view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]')} border-t border-l border-zinc-800`}>
-          
-          {/* Header der Spalten */}
+      {/* Grid */}
+      {/* Grid */}
+      <div className="flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory">
+        <div 
+          className={`grid ${view === 'month' ? 'grid-cols-7' : (view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]')} border-t border-l border-border`}
+          style={{ minWidth: view === 'week' ? '800px' : 'auto' }}
+        >
           {view !== 'month' && (
             <>
-              <div className="bg-zinc-900 border-r border-b border-zinc-800" />
+              {/* Die Sticky Zeit-Spalte */}
+              <div className="bg-card-bg border-r border-b border-border sticky left-0 z-20" />
               {days.map((day) => (
-                <div key={day.toString()} className={`p-2 text-center border-r border-b border-zinc-800 ${isToday(day) ? 'bg-blue-900/30' : (isWeekend(day) ? 'bg-zinc-900/50' : 'bg-zinc-900')}`}>
-                  <div className="text-xs uppercase text-zinc-400">{format(day, "EE", { locale: de })}</div>
-                  <div className={`font-bold ${isWeekend(day) ? 'text-zinc-500' : 'text-zinc-100'}`}>{format(day, "dd")}</div>
+                <div key={day.toString()} className={`p-2 text-center border-r border-b border-border 
+                  ${isToday(day) ? 'bg-primary/20' : (isWeekend(day) ? 'bg-muted/40' : 'bg-card')}`}>
+                  <div className="text-xs text-muted-foreground">{format(day, "EE", { locale: de })}</div>
+                  <div className={`font-bold ${isWeekend(day) ? 'text-muted-foreground' : 'text-foreground'}`}>
+                    {format(day, "dd")}
+                  </div>
                 </div>
               ))}
             </>
           )}
 
-          {/* Zellen Inhalt */}
-          {hours.map(hour => (
-            <div key={hour} className="contents">
-              <div className="p-2 text-right text-xs border-r border-b border-zinc-800 bg-zinc-900 text-zinc-500">{hour}:00</div>
-              {days.map((day, dayIndex) => (
-                <div 
-                  key={dayIndex} 
-                  onClick={() => handleCellClick(day, hour)}
-                  // Wochenende leicht dunkler markieren: 'bg-zinc-900/30'
-                  className={`relative border-r border-b border-zinc-800 h-20 cursor-pointer hover:bg-zinc-800 ${isWeekend(day) ? 'bg-zinc-900/30' : 'bg-zinc-950'}`}
-                >
-                  {isToday(day) && getHours(new Date()) === hour && (
-                    <div className="absolute left-0 right-0 border-t-2 border-red-500 z-10" />
-                  )}
-                  {/* ... Event Mapping bleibt gleich ... */}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+
+
+
+
+          {/* Inhalt Zellen */}
+{view === 'month' ? (
+  <>
+    {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((dayName) => (
+      <div key={dayName} className="p-2 text-center text-xs font-bold text-muted-foreground border-b border-border">
+        {dayName}
       </div>
+    ))}
+    
+    {/* Platzhalter */}
+{Array.from({ length: (days[0].getDay() + 6) % 7 }).map((_, i) => (
+  <div 
+    key={`empty-${i}`} 
+    className="h-32 border-r border-b border-border bg-muted/10" 
+  />
+    ))}
+
+    {/* Tatsächliche Tage */}
+{days.map((day) => (
+  <div 
+    key={day.toString()} 
+    onClick={() => handleCellClick(day, 9)} 
+    className={`h-32 border-r border-b border-border p-2 cursor-pointer transition-colors flex flex-col items-start
+      ${isWeekend(day) ? 'bg-muted' : 'bg-background'} 
+      ${isDateToday(day) ? 'bg-blue-500/10' : ''} 
+      hover:bg-accent/40`}
+  >
+    <span className={isToday(day) ? 'font-bold text-primary' : ''}>
+      {format(day, "d")}
+    </span>
+  </div>
+))}
+  </>
+) : (
+            hours.map(hour => (
+  <div key={hour} className="contents">
+    {/* Zeit-Spalte (links) */}
+    <div className="p-2 text-right text-xs border-r border-b border-border bg-card-bg text-muted-foreground">
+      {hour}:00
     </div>
+
+    {/* Tages-Zellen */}
+{days.map((day, dayIndex) => (
+  <div 
+    key={dayIndex} 
+    onClick={() => handleCellClick(day, hour)} 
+    className={`relative border-r border-b border-border h-20 cursor-pointer transition-colors 
+  ${isWeekend(day) ? 'bg-muted/30' : 'bg-background'} // <--- HIER
+  ${isToday(day) ? 'bg-blue-500/10' : ''}             // <--- HIER
+  hover:bg-accent/40`}
+  >
+    {/* Nur noch die Zeit-Linie in der Wochenansicht */}
+    {isToday(day) && getHours(new Date()) === hour && (
+      <div className="absolute top-[50%] left-0 w-full h-[2px] bg-red-500 z-10" />
+    )}
+    {events
+          .filter(e => isSameDay(new Date(e.start_time), day) && getHours(new Date(e.start_time)) === hour)
+          .map(e => (
+            <div key={e.id} className="bg-primary text-primary-foreground text-[10px] p-1 m-1 rounded truncate">
+              {e.title}
+            </div>
+          ))
+        }
+      </div>
+    ))}
+  </div>
+))
+          )}
+        </div> {/* Schließt das Grid-Div */}
+      </div> {/* Schließt das Flex-1 Overflow-Div */}
+
+      <EventModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        defaultDate={selectedCell.date}
+        defaultTime={selectedCell.time}
+        onSave={async (data: any) => {
+          const { error } = await supabase.from('calendar_events').insert([{
+            title: data.title,
+            start_time: data.startTime,
+            duration_minutes: 30,
+            calendar_id: 1
+          }]);
+          if (!error) window.location.reload();
+        }}
+      />
+    </div> /* Schließt das Haupt-Div */
   );
 }
