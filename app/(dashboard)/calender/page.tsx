@@ -16,7 +16,13 @@ export default function KalenderPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState({ date: "", time: "" });
 
-  // ... (getDays Logik bleibt gleich) ...
+ const handleCellClick = (day: Date, hour: number) => {
+    setSelectedCell({
+      date: format(day, "yyyy-MM-dd"),
+      time: `${hour.toString().padStart(2, '0')}:00`
+    });
+    setIsModalOpen(true);
+  };
   const getDays = () => {
     if (view === "day") return [currentDate];
     if (view === "month") {
