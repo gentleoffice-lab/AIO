@@ -40,12 +40,21 @@ export default function KalenderPage() {
   // Daten laden (dein bestehender Code)
   useEffect(() => {
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth
+      .getUser();
       if (user) {
-        const { data } = await supabase.from('profiles').select('first_name, last_name, avatar_url').eq('id', user.id).single();
+
+        const { data } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, avatar_url')
+        .eq('user_uuid', user.id)
+        .single();
+
         if (data) setProfile(data);
       }
-      const { data } = await supabase.from('calendar_events').select('*');
+      const { data } = await supabase
+      .from('calendar_events')
+      .select('*');
       if (data) setEvents(data);
     }
     loadData();
@@ -208,33 +217,39 @@ export default function KalenderPage() {
         
 
 
-       onSave={async (data: any) => {
+      onSave={async (data: any) => {
   try {
-    // 1. Sicherheit: Datum prüfen
-    if (!data.start_time) throw new Error("Startzeit ist erforderlich!");
+    // 1. Startzeit in Date-Objekt umwandeln
+    const start = new Date(data.start_time);
     
-    const startTimeDate = new Date(data.start_time);
-    if (isNaN(startTimeDate.getTime())) throw new Error("Ungültiges Datum.");
-
-    // 2. Berechnung: Endzeit basierend auf Dauer
+    // 2. Endzeit berechnen (Startzeit + Dauer in Minuten)
     const duration = data.duration_minutes || 30;
-    const end_time = new Date(startTimeDate.getTime() + (duration * 60000));
+    const end = new Date(start.getTime() + (duration * 60000));
 
-    // 3. Insert
-    const { error } = await supabase.from('calendar_events').insert([{
-      calendar_id: 1, 
-      title: data.title,
-      start_time: startTimeDate.toISOString(),
-      end_time: end_time.toISOString(),
-      duration_minutes: duration,
-      description: data.description || ""
-    }]);
+    // 3. Supabase Insert
+    const { error } = await supabase
+      .from('calendar_events')
+      .insert([{
+        calendar_id: 1, // Prüfe, ob dies die richtige ID ist
+        title: data.title,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        duration_minutes: duration,
+        is_private: !!data.is_private,
+        is_all_day: !!data.is_all_day,
+        description: data.description || "",
+        location: data.location || ""
+      }]);
 
     if (error) throw error;
+    
+    // 4. Nach Erfolg Modal schließen und Seite neu laden
     setIsModalOpen(false);
     window.location.reload();
+    
   } catch (err) {
-    alert(err instanceof Error ? err.message : "Fehler!");
+    console.error("Fehler:", err);
+    alert("Speichern fehlgeschlagen: " + (err as any).message);
   }
 }}
 
