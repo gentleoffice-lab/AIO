@@ -16,7 +16,7 @@ export default function KalenderPage() {
   const [profile, setProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState({ date: "", time: "" });
-  
+  const [userCalendarId, setUserCalendarId] = useState<number | null>(null);
   // Die Referenz für den Scroll-Container
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +30,23 @@ export default function KalenderPage() {
            date.getFullYear() === today.getFullYear();
   };
 
+
+  // In einem useEffect:
+useEffect(() => {
+  const fetchUserCalendar = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from('calendars')
+        .select('id')
+        .eq('owner_id', user.id) // Hier wird die Verknüpfung geprüft
+        .single();
+      if (data) setUserCalendarId(data.id);
+    }
+  };
+  fetchUserCalendar();
+}, []);
+
   // Scroll-Effekt: Springt bei Ansichtswechsel auf 8:00 Uhr
   useEffect(() => {
     if (view !== 'month' && scrollRef.current) {
@@ -39,25 +56,37 @@ export default function KalenderPage() {
 
   // Daten laden (dein bestehender Code)
   useEffect(() => {
-    async function loadData() {
-      const { data: { user } } = await supabase.auth
-      .getUser();
-      if (user) {
 
-        const { data } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, avatar_url')
-        .eq('user_uuid', user.id)
-        .single();
 
-        if (data) setProfile(data);
-      }
-      const { data } = await supabase
+
+
+          async function loadData() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Wir nutzen ein 'inner join' in einer Art, die Supabase sicher verarbeitet:
+    // Wir fragen calendar_events ab und filtern über die verknüpfte calendars-Tabelle.
+    const { data: events, error } = await supabase
       .from('calendar_events')
-      .select('*');
-      if (data) setEvents(data);
-    }
-    loadData();
+      .select(`
+        *,
+        calendars!inner(owner_id)
+      `)
+      .eq('calendars.owner_id', user.id);
+
+    if (error) throw error;
+
+    setEvents(events || []);
+  } catch (err) {
+    console.error("Fehler beim Laden der Events:", err);
+  }
+}
+
+
+
+
+            loadData();
   }, []);
 
   const getDays = () => {
@@ -219,40 +248,53 @@ export default function KalenderPage() {
 
       onSave={async (data: any) => {
   try {
-    // 1. Startzeit in Date-Objekt umwandeln
+    // 1. User abrufen
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Nicht eingeloggt");
+
+    // 2. Den Kalender des Users finden (anhand der user_uuid in profiles)
+    // Wir joinen über owner_id (die die ID aus profiles ist)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_uuid', user.id)
+      .single();
+
+    if (!userProfile) throw new Error("Profil nicht gefunden");
+
+    const { data: userCalendar } = await supabase
+      .from('calendars')
+      .select('id')
+      .eq('owner_id', userProfile.id)
+      .single();
+
+    if (!userCalendar) throw new Error("Kein Kalender für diesen User gefunden");
+
+    // 3. Speichern
     const start = new Date(data.start_time);
-    
-    // 2. Endzeit berechnen (Startzeit + Dauer in Minuten)
     const duration = data.duration_minutes || 30;
     const end = new Date(start.getTime() + (duration * 60000));
 
-    // 3. Supabase Insert
     const { error } = await supabase
       .from('calendar_events')
       .insert([{
-        calendar_id: 1, // Prüfe, ob dies die richtige ID ist
+        calendar_id: userCalendar.id, // Dynamisch!
         title: data.title,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         duration_minutes: duration,
         is_private: !!data.is_private,
-        is_all_day: !!data.is_all_day,
         description: data.description || "",
         location: data.location || ""
       }]);
 
     if (error) throw error;
-    
-    // 4. Nach Erfolg Modal schließen und Seite neu laden
     setIsModalOpen(false);
-    window.location.reload();
-    
   } catch (err) {
-    console.error("Fehler:", err);
-    alert("Speichern fehlgeschlagen: " + (err as any).message);
+    console.error("Fehler beim Speichern:", err);
+    alert("Fehler: " + err.message);
   }
 }}
-
 
 
 

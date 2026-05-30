@@ -5,8 +5,9 @@ export default function EventModal({ isOpen, onClose, onSave, defaultDate, defau
   const [formData, setFormData] = useState({
     title: "",
     start_time: defaultDate && defaultTime ? `${defaultDate}T${defaultTime}` : "",
-    duration_minutes: 30,
-    is_all_day: false,
+    duration_minutes: 30, // Standard 30 Minuten
+    is_private: false,
+    location: "",
     description: ""
   });
 
@@ -24,19 +25,47 @@ export default function EventModal({ isOpen, onClose, onSave, defaultDate, defau
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div ref={modalRef} className="bg-zinc-900 border border-zinc-700 p-8 rounded-3xl w-full max-w-sm shadow-2xl text-zinc-100">
+      <div ref={modalRef} className="bg-zinc-900 border border-zinc-700 p-8 rounded-3xl w-full max-w-md shadow-2xl text-zinc-100">
         <h3 className="text-2xl font-bold mb-6">Neuer Termin</h3>
+        
         <div className="space-y-4">
-          <input placeholder="Titel" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+          {/* Titel */}
+          <input placeholder="Titel hinzufügen" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
             onChange={e => setFormData({...formData, title: e.target.value})} />
-          <input type="datetime-local" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
-            value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} />
-          <input type="number" placeholder="Dauer (Minuten)" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
-            value={formData.duration_minutes} onChange={e => setFormData({...formData, duration_minutes: parseInt(e.target.value) || 0})} />
+
+          {/* Von-Zeit & Dauer Dropdown in einer Reihe */}
+          <div className="flex gap-2">
+            <input type="datetime-local" className="flex-1 p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+              value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} />
+            
+            <select className="w-24 p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+              value={formData.duration_minutes}
+              onChange={e => setFormData({...formData, duration_minutes: parseInt(e.target.value)})}>
+              <option value="15">15 Min</option>
+              <option value="30">30 Min</option>
+              <option value="45">45 Min</option>
+              <option value="60">60 Min</option>
+            </select>
+          </div>
+
+          {/* Ort & Privat-Check */}
+          <input placeholder="Ort hinzufügen" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none"
+            onChange={e => setFormData({...formData, location: e.target.value})} />
+            
+          <label className="flex items-center gap-2 text-sm text-zinc-400">
+            <input type="checkbox" className="accent-blue-500" onChange={e => setFormData({...formData, is_private: e.target.checked})} /> Privat (nur für mich sichtbar)
+          </label>
+
+          {/* Beschreibung */}
+          <textarea placeholder="Beschreibung oder Link hinzufügen" className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-xl outline-none h-24"
+            onChange={e => setFormData({...formData, description: e.target.value})} />
         </div>
-        <button onClick={() => onSave(formData)} className="w-full mt-8 py-3 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition">
-          Speichern
-        </button>
+
+        {/* Buttons */}
+        <div className="flex gap-3 mt-8">
+          <button onClick={onClose} className="flex-1 py-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition">Zurück</button>
+          <button onClick={() => onSave(formData)} className="flex-1 py-3 bg-blue-600 rounded-xl hover:bg-blue-500 transition font-bold">Speichern</button>
+        </div>
       </div>
     </div>
   );
