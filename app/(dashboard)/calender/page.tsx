@@ -64,6 +64,9 @@ export default function KalenderPage() {
 
   // ... (oberhalb im Code behältst du deine Logik bei)
 
+
+
+
   return (
     <div className="flex flex-col h-screen bg-background">
 
@@ -193,12 +196,16 @@ export default function KalenderPage() {
 {/* Das Modal wird hier permanent gerendert, aber nur bei isModalOpen = true sichtbar */}
 <EventModal 
   isOpen={isModalOpen} 
-  onClose={() => setIsModalOpen(false)}
+  onClose={() => setIsModalOpen(false)} 
   initialDate={selectedCell.date} 
   initialTime={selectedCell.time}
+  calendarId={calendarId || ""} 
+  onSave={async (eventData: any) => {      
+    console.log("Speichere:", eventData);
+    await fetchEvents(); // Events neu laden nach dem Speichern
+    setIsModalOpen(false);
+  }}
 />
-
-
-    </div>
-  );
-}
+</div> // Schließt das erste div (className="flex flex-col h-screen...")
+);
+} // Schließt die Funktion KalenderPage
