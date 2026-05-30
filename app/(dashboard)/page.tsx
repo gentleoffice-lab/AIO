@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "@/lib/useTheme";
 import { supabase } from "@/lib/supabaseClient"; 
 import Link from "next/link";
+import { format } from "date-fns"; // Wichtig für das Datum
 
 interface Widget {
   id: string;
@@ -27,10 +27,12 @@ const AndroidQrIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   </svg>
 );
 
+
+
 export default function DashboardOverview() {
-  
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]); // NEU: State für Events
 
   // ECHTER AUTH-CHECK
   useEffect(() => {
@@ -48,8 +50,9 @@ export default function DashboardOverview() {
         router.push("/login");
       }
     };
-
     checkUserSession();
+    
+
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
@@ -64,6 +67,25 @@ export default function DashboardOverview() {
       subscription.unsubscribe();
     };
   }, [router]);
+
+
+// 2. NEU: Events laden
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      const { data } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .gte('start_time', new Date().toISOString()) // Nur zukünftige Termine
+        .order('start_time', { ascending: true })
+        .limit(2); // Nur die nächsten 2
+      
+      if (data) setUpcomingEvents(data);
+    };
+    fetchUpcomingEvents();
+  }, []);
+
+
+
 
   // WIDGET-STATE
   const [widgets, setWidgets] = useState<Widget[]>([
@@ -141,6 +163,10 @@ export default function DashboardOverview() {
           </div>
         </div>
 
+
+
+
+
         {/* Dynamisches Kachel-Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           {widgets
@@ -154,6 +180,8 @@ export default function DashboardOverview() {
                   dark:bg-zinc-900/30 dark:border-zinc-800/80 dark:hover:border-zinc-700"
                 data-size={widget.size}
               >
+
+
                 {/* Widget Toolbar */}
                 <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -186,6 +214,23 @@ export default function DashboardOverview() {
                   <p className="text-sm text-zinc-500 leading-relaxed pr-10">{widget.content}</p>
                 </div>
 
+{/* NEU: Logik für die Kalender-Kachel */}
+                {widget.id === 'calender' && upcomingEvents.length > 0 ? (
+                  <div className="space-y-2">
+                    {upcomingEvents.map(event => (
+                      <div key={event.id} className="text-sm p-2 rounded bg-zinc-500/5 border border-zinc-500/10 flex justify-between">
+                        <span className="font-medium truncate">{event.title}</span>
+                        <span className="text-zinc-500">{format(new Date(event.start_time), "dd.MM. HH:mm")}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-500">{widget.content}</p>
+                )}
+              
+
+
+
                 {/* Aktionsbutton */}
                 <div className="mt-6 pt-4 border-t border-zinc-500/10 flex justify-end">
                   <button 
@@ -199,6 +244,12 @@ export default function DashboardOverview() {
               </div>
             ))}
         </div>
+
+
+
+
+
+
 
         {/* Feedback, wenn alles ausgeblendet ist */}
         {widgets.filter(w => w.visible).length === 0 && (
