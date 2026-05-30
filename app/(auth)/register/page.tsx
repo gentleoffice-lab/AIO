@@ -54,16 +54,26 @@ export default function RegisterPage() {
       if (authError) throw authError;
 
       if (data?.user) {
-        await supabase.from("profiles").insert([{ 
-          id: data.user.id, 
-          username, 
-          role,
-          updated_at: new Date().toISOString()
-        }]);
+  // Wir verwenden 'user_uuid' statt 'id', damit Supabase die ID selbst generiert
+  const { error: profileError } = await supabase.from("profiles").insert([{ 
+    user_uuid: data.user.id, // Verknüpfung mit Auth
+    username: username,
+    role: role,
+    updated_at: new Date().toISOString()
+  }]);
 
-        setSuccessMsg("Registrierung erfolgreich! Weiterleitung...");
-        setTimeout(() => router.push("/"), 2000);
+        if (profileError) {
+    console.error("Profile Error:", profileError);
+    throw new Error("Fehler beim Erstellen des Profils.");
+  }
+
+  setSuccessMsg("Registrierung erfolgreich! Weiterleitung...");
+  setTimeout(() => router.push("/"), 2000);
       }
+
+
+
+      
     } catch (err: any) {
       setErrorMsg(err.message || "Ein unerwarteter Fehler ist aufgetreten.");
     } finally {
