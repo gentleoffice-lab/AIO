@@ -1,10 +1,22 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-export default function EventModal({ isOpen, onClose, onSave, defaultDate, defaultTime }) {
+interface EventModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialDate?: string; 
+  initialTime?: string;
+  calendarId: number | null; // Wichtig: Typisierung!
+  onSave: (data: any) => Promise<void>;
+}
+
+
+
+
+export default function EventModal({ isOpen, onClose, onSave, initialDate, initialTime, calendarId }: EventModalProps) {
   const [formData, setFormData] = useState({
     title: "",
-    start_time: defaultDate && defaultTime ? `${defaultDate}T${defaultTime}` : "",
+    start_time: initialDate && initialTime ? `${initialDate}T${initialTime  }` : "",
     duration_minutes: 30, // Standard 30 Minuten
     is_private: false,
     location: "",
@@ -13,12 +25,29 @@ export default function EventModal({ isOpen, onClose, onSave, defaultDate, defau
 
   const modalRef = useRef(null);
 
+  const handleSave = async () => {
+    if (!calendarId) {
+      alert("Fehler: Kein Kalender zugewiesen!");
+      return;
+    }
+    await onSave({ ...formData, calendar_id: calendarId });
+}
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) onClose();
+    const handleClickOutside = (event: any) => {
+      // WICHTIG: Hier prüfen wir, ob modalRef.current überhaupt existiert
+      if (modalRef.current && !(modalRef.current as any).contains(event.target)) {
+        onClose();
+      }
     };
-    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -64,7 +93,7 @@ export default function EventModal({ isOpen, onClose, onSave, defaultDate, defau
         {/* Buttons */}
         <div className="flex gap-3 mt-8">
           <button onClick={onClose} className="flex-1 py-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition">Zurück</button>
-          <button onClick={() => onSave(formData)} className="flex-1 py-3 bg-blue-600 rounded-xl hover:bg-blue-500 transition font-bold">Speichern</button>
+          <button onClick={handleSave} className="flex-1 py-3 bg-blue-600 rounded-xl hover:bg-blue-500 transition font-bold">Speichern</button>
         </div>
       </div>
     </div>

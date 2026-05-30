@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -12,24 +13,22 @@ export default function RegisterPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Verhindert Hydration-Fehler
   useEffect(() => {
     setMounted(true);
   }, []);
   
-  // Formular-States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState(""); 
   const [role] = useState<RoleType>("free user");
 
-  // Status-States
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // Korrekte Funktionsdefinition innerhalb der Komponente
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
@@ -53,29 +52,11 @@ export default function RegisterPage() {
 
       if (authError) throw authError;
 
-      if (data?.user) {
-  // Wir verwenden 'user_uuid' statt 'id', damit Supabase die ID selbst generiert
-  const { error: profileError } = await supabase.from("profiles").insert([{ 
-    user_uuid: data.user.id, // Verknüpfung mit Auth
-    username: username,
-    role: role,
-    updated_at: new Date().toISOString()
-  }]);
-
-        if (profileError) {
-    console.error("Profile Error:", profileError);
-    throw new Error("Fehler beim Erstellen des Profils.");
-  }
-
-  setSuccessMsg("Registrierung erfolgreich! Weiterleitung...");
-  setTimeout(() => router.push("/"), 2000);
-      }
-
-
-
+      setSuccessMsg("Erfolgreich! Bitte bestätige deine E-Mail-Adresse für den Login.");
+      setTimeout(() => router.push("/login"), 4000);
       
     } catch (err: any) {
-      setErrorMsg(err.message || "Ein unerwarteter Fehler ist aufgetreten.");
+      setErrorMsg(err.message || "Fehler bei der Registrierung.");
     } finally {
       setLoading(false);
     }
@@ -83,17 +64,14 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 transition-colors duration-300 bg-background text-foreground">
-      
       <div className="w-full max-w-md p-8 rounded-2xl border backdrop-blur-xl space-y-6 text-center shadow-xl border-border bg-card-bg/70">
         
-        {/* Header mit Switch-Button */}
         <div className="relative mb-8">
           {mounted && (
             <div className="absolute right-0 -top-2">
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="relative w-11 h-6 rounded-full transition-all duration-300 bg-border border border-border shadow-inner"
-                aria-label="Theme umschalten"
               >
                 <div 
                   className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 bg-foreground 
@@ -102,7 +80,6 @@ export default function RegisterPage() {
               </button>
             </div>
           )}
-
           <div className="text-center pt-4">
             <h2 className="text-2xl font-bold tracking-tight">Account erstellen</h2>
             <p className="text-sm text-zinc-500 mt-1">Registriere dich für dein AIO-System</p>
@@ -120,15 +97,12 @@ export default function RegisterPage() {
               placeholder="z.B. MaxMustermann" 
               className="w-full rounded-xl px-4 py-3 outline-none transition text-sm border bg-background border-border focus:border-zinc-400"
             />
-
             <label className="text-xs font-semibold text-zinc-400 block -mb-1">E-Mail</label>
             <input 
               type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               placeholder="deine@email.com" 
               className="w-full rounded-xl px-4 py-3 outline-none transition text-sm border bg-background border-border focus:border-zinc-400"
             />
-
-            {/* Rollenauswahl */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-zinc-400 block">Konto-Typ wählen</label>
               <div className="grid grid-cols-2 gap-2 p-1 rounded-xl border bg-background border-border">
@@ -136,7 +110,6 @@ export default function RegisterPage() {
                 <button type="button" disabled className="py-2.5 rounded-lg text-xs font-medium transition opacity-40 cursor-not-allowed bg-zinc-800/20 text-zinc-400">🔒 Premium (Bald)</button>
               </div>
             </div>
-
             <label className="text-xs font-semibold text-zinc-400 block -mb-1">Passwort</label>
             <input 
               type="password" value={password} onChange={(e) => setPassword(e.target.value)}
@@ -149,7 +122,6 @@ export default function RegisterPage() {
               className="w-full rounded-xl px-4 py-3 outline-none transition text-sm border bg-background border-border focus:border-zinc-400"
             />
           </div>
-
           <button 
             type="submit" disabled={loading}
             className="w-full py-3 font-semibold rounded-xl transition active:scale-[0.98] text-sm disabled:opacity-50 mt-4 shadow-md bg-foreground text-background hover:opacity-90"

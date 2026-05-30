@@ -2,93 +2,45 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, getHours, startOfMonth, endOfMonth, isSameDay, isToday} from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, getHours, startOfMonth, endOfMonth, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 import EventModal from "../components/EventModal";
+import { useAuth } from "../../(auth)/AuthContext";
+import { addWeeks, subWeeks, addMonths, subMonths } from "date-fns"; // Import ergänzen!
 
-
-
+import ListView from "./ListView";
+import WeekView from "./WeekView";
+//import MonthView from "./MonthView";
 
 export default function KalenderPage() {
-  const [view, setView] = useState("week");
+  // 1. Context nutzen
+  const { calendarId, loading: authLoading } = useAuth();
+  
+  // 2. UI States
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState({ date: "", time: "" });
-  const [userCalendarId, setUserCalendarId] = useState<number | null>(null);
-  // Die Referenz für den Scroll-Container
+  const [view, setView] = useState("week");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Hilfsfunktionen
-  const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
-  
-  const isDateToday = (date: Date) => {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-  };
-
-
-  // In einem useEffect:
-useEffect(() => {
-  const fetchUserCalendar = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('calendars')
-        .select('id')
-        .eq('owner_id', user.id) // Hier wird die Verknüpfung geprüft
-        .single();
-      if (data) setUserCalendarId(data.id);
-    }
-  };
-  fetchUserCalendar();
-}, []);
-
-  // Scroll-Effekt: Springt bei Ansichtswechsel auf 8:00 Uhr
-  useEffect(() => {
-    if (view !== 'month' && scrollRef.current) {
-      scrollRef.current.scrollTop = 8 * 80; 
-    }
-  }, [view]);
-
-  // Daten laden (dein bestehender Code)
-  useEffect(() => {
-
-
-
-
-          async function loadData() {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    // Wir nutzen ein 'inner join' in einer Art, die Supabase sicher verarbeitet:
-    // Wir fragen calendar_events ab und filtern über die verknüpfte calendars-Tabelle.
-    const { data: events, error } = await supabase
+  // 3. Events laden, sobald calendarId aus dem Context bereit ist
+  const fetchEvents = async () => {
+    if (!calendarId) return;
+    const { data, error } = await supabase
       .from('calendar_events')
-      .select(`
-        *,
-        calendars!inner(owner_id)
-      `)
-      .eq('calendars.owner_id', user.id);
+      .select('*')
+      .eq('calendar_id', calendarId);
+      
+    if (error) console.error("Event-Ladefehler:", error);
+    else setEvents(data || []);
+  };
 
-    if (error) throw error;
+  useEffect(() => {
+    fetchEvents();
+  }, [calendarId]);
 
-    setEvents(events || []);
-  } catch (err) {
-    console.error("Fehler beim Laden der Events:", err);
-  }
-}
-
-
-
-
-            loadData();
-  }, []);
-
+  // 4. Hilfsfunktionen für das Grid
   const getDays = () => {
     if (view === "day") return [currentDate];
     if (view === "month") return eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
@@ -97,208 +49,156 @@ useEffect(() => {
 
   const days = getDays();
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  
-  // Grid-Spalten Logik
-  const gridTemplate = view === 'month' ? 'grid-cols-7' : view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]';
 
   const handleCellClick = (day: Date, hour?: number) => {
     setSelectedCell({
       date: format(day, "yyyy-MM-dd"),
-      time: hour ? `${hour.toString().padStart(2, '0')}:00` : "09:00"
+      time: hour !== undefined ? `${hour.toString().padStart(2, '0')}:00` : "09:00"
     });
     setIsModalOpen(true);
   };
 
+  // 5. Loading/Error States
+  if (authLoading) return <div className="p-10">Wird geladen...</div>;
+  if (!calendarId) return <div className="p-10">Kein Kalender gefunden. Bitte stellen Sie sicher, dass ein Kalender mit Ihrem Profil verknüpft ist.</div>;
+
+  // ... (oberhalb im Code behältst du deine Logik bei)
+
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground transition-colors duration-300">
+    <div className="flex flex-col h-screen bg-background">
 
-      {/* Header mit dynamischen Farben */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-card-bg shrink-0">
-        <h2 className="text-xl font-bold">{format(currentDate, "MMMM yyyy", { locale: de })}</h2>
-        <div className="flex items-center gap-4">
-          {profile && <span className="text-sm font-medium">Hallo, {profile.first_name}</span>}
-          
-          <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 border border-border rounded text-sm hover:bg-accent hover:text-accent-foreground">
-            Heute
-          </button>
-          
-          <select value={view} onChange={(e) => setView(e.target.value)} className="bg-background border border-border p-1 rounded text-sm">
-            <option value="day">Tag</option>
-            <option value="week">Woche</option>
-            <option value="month">Monat</option>
-          </select>
 
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground shadow-lg overflow-hidden">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <span>{profile ? `${(profile.first_name?.[0] || "")}${(profile.last_name?.[0] || "")}`.toUpperCase() : "JD"}</span>
-            )}
+
+
+
+      {/* Header Bereich */}
+      
+<div className="flex items-center justify-between p-4 border-b border-border">
+  {/* Linke Seite: Navigation & Datum */}
+  <div className="flex items-center gap-4">
+    <div className="text-xs text-muted-foreground">{currentDate.getFullYear()}</div>
+    <div className="flex items-center gap-2">
+      <button 
+  onClick={() => setCurrentDate(prev => 
+    view === "week" ? subWeeks(prev, 1) : subMonths(prev, 1)
+  )} 
+  className="p-2 hover:bg-accent rounded-full transition-colors"
+>
+  &lt;
+</button>
+      <h2 
+  className="text-lg font-bold w-40 text-center cursor-pointer hover:text-primary transition-colors"
+  onClick={() => {/* Hier später DatePicker für Jahr öffnen */}}
+>
+  {format(currentDate, view === "week" ? "dd. MMM" : "MMMM yyyy", { locale: de })}
+</h2>
+<button 
+  onClick={() => setCurrentDate(prev => 
+    view === "week" ? addWeeks(prev, 1) : addMonths(prev, 1)
+  )} 
+  className="p-2 hover:bg-accent rounded-full transition-colors"
+>
+  &gt;
+</button>
+    </div>
+  </div>
+
+  {/* Rechte Seite: Suche, Heute & User */}
+  <div className="flex items-center gap-3">
+    <button className="p-2 hover:bg-accent rounded">🔍</button>
+    <button 
+      onClick={() => setCurrentDate(new Date())} 
+      className="px-3 py-1 text-sm border rounded hover:bg-accent"
+    >
+      Heute
+    </button>
+    
+    {/* Hier wird später dein User-Icon aus dem Profil geladen */}
+    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+      👤
+    </div>
+  </div>
+</div>
+
+
+{/* View-Switcher */}
+<div className="flex gap-2 p-2 border-b">
+  {["day", "week", "month", "list"].map((v) => (
+    <button 
+      key={v}
+      onClick={() => setView(v)}
+      className={`px-3 py-1 text-sm rounded capitalize ${view === v ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+    >
+      {v}
+    </button>
+  ))}
+</div>
+
+{/* Hier laden wir die Ansicht dynamisch */}
+<div className="flex-1 overflow-auto p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+  {view === "list" && <ListView events={events} />}
+
+  {view === "week" && (
+  <WeekView 
+  events={events} 
+  currentDate={currentDate} 
+  onCellClick={(date, time) => {
+    setSelectedCell({ date: format(date, "yyyy-MM-dd"), time });
+    setIsModalOpen(true);
+  }} 
+/>
+)}
+
+  {/* Weitere Views folgen... */}
+</div>
+
+
+
+
+      {/* TEST: Hier zeigen wir die geladenen Events als Liste an */}
+      {/* Chronologische Liste der Termine */}
+<div className="p-4 bg-card rounded-lg border border-border mt-4">
+  <h3 className="font-semibold mb-4 text-lg">Bevorstehende Termine</h3>
+  {events.length > 0 ? (
+    <div className="space-y-3">
+      {events.map((e) => (
+        <div key={e.id} className="flex items-center p-3 bg-accent/50 rounded-md hover:bg-accent transition-colors">
+          <div className="min-w-[120px] text-sm font-medium text-primary">
+            {format(new Date(e.start_time), "dd.MM. HH:mm", { locale: de })}
+          </div>
+          <div className="flex-1">
+            <p className="font-medium">{e.title}</p>
+            {e.description && <p className="text-xs text-muted-foreground">{e.description}</p>}
           </div>
         </div>
-      </div>
-
-
-      <div 
-          ref={scrollRef}
-          className="flex-1 overflow-x-auto overflow-y-auto snap-x snap-mandatory"
-          >
-        <div 
-          className={`grid ${view === 'month' ? 'grid-cols-7' : (view === 'day' ? 'grid-cols-[auto_1fr]' : 'grid-cols-[auto_repeat(7,1fr)]')} border-t border-l border-border`}
-          style={{ minWidth: view === 'week' ? '800px' : 'auto' }}
-        >
-          {view !== 'month' && (
-            <>
-              {/* Die Sticky Zeit-Spalte */}
-              <div className="bg-card-bg border-r border-b border-border sticky left-0 z-20" />
-              {days.map((day) => (
-                <div key={day.toString()} className={`p-2 text-center border-r border-b border-border 
-                  ${isToday(day) ? 'bg-primary/20' : (isWeekend(day) ? 'bg-muted/40' : 'bg-card')}`}>
-                  <div className="text-xs text-muted-foreground">{format(day, "EE", { locale: de })}</div>
-                  <div className={`font-bold ${isWeekend(day) ? 'text-muted-foreground' : 'text-foreground'}`}>
-                    {format(day, "dd")}
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-
-
-
-
-
-          {/* Inhalt Zellen */}
-{view === 'month' ? (
-  <>
-    {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((dayName) => (
-      <div key={dayName} className="p-2 text-center text-xs font-bold text-muted-foreground border-b border-border">
-        {dayName}
-      </div>
-    ))}
-    
-    {/* Platzhalter */}
-{Array.from({ length: (days[0].getDay() + 6) % 7 }).map((_, i) => (
-  <div 
-    key={`empty-${i}`} 
-    className="h-32 border-r border-b border-border bg-muted/10" 
-  />
-    ))}
-
-    {/* Tatsächliche Tage */}
-{days.map((day) => (
-  <div 
-    key={day.toString()} 
-    onClick={() => handleCellClick(day, 9)} 
-    className={`h-32 border-r border-b border-border p-2 cursor-pointer transition-colors flex flex-col items-start
-      ${isWeekend(day) ? 'bg-muted' : 'bg-background'} 
-      ${isDateToday(day) ? 'bg-blue-500/10' : ''} 
-      hover:bg-accent/40`}
-  >
-    <span className={isToday(day) ? 'font-bold text-primary' : ''}>
-      {format(day, "d")}
-    </span>
-  </div>
-))}
-  </>
-) : (
-            hours.map(hour => (
-  <div key={hour} className="contents">
-    {/* Zeit-Spalte (links) */}
-    <div className="p-2 text-right text-xs border-r border-b border-border bg-card-bg text-muted-foreground">
-      {hour}:00
+      ))}
     </div>
-
-    {/* Tages-Zellen */}
-{days.map((day, dayIndex) => (
-  <div 
-    key={dayIndex} 
-    onClick={() => handleCellClick(day, hour)} 
-    className={`relative border-r border-b border-border h-20 cursor-pointer transition-colors 
-  ${isWeekend(day) ? 'bg-muted/30' : 'bg-background'} // <--- HIER
-  ${isToday(day) ? 'bg-blue-500/10' : ''}             // <--- HIER
-  hover:bg-accent/40`}
-  >
-    {/* Nur noch die Zeit-Linie in der Wochenansicht */}
-    {isToday(day) && getHours(new Date()) === hour && (
-      <div className="absolute top-[50%] left-0 w-full h-[2px] bg-red-500 z-10" />
-    )}
-    {events
-          .filter(e => isSameDay(new Date(e.start_time), day) && getHours(new Date(e.start_time)) === hour)
-          .map(e => (
-            <div key={e.id} className="bg-primary text-primary-foreground text-[10px] p-1 m-1 rounded truncate">
-              {e.title}
-            </div>
-          ))
-        }
-      </div>
-    ))}
-  </div>
-))
-          )}
-        </div> {/* Schließt das Grid-Div */}
-      </div> {/* Schließt das Flex-1 Overflow-Div */}
-
-      <EventModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
-        defaultDate={selectedCell.date}
-        defaultTime={selectedCell.time}
-        
+  ) : (
+    <p className="text-sm text-muted-foreground">Keine Termine geplant.</p>
+  )}
 
 
-      onSave={async (data: any) => {
-  try {
-    // 1. User abrufen
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Nicht eingeloggt");
+</div>
 
-    // 2. Den Kalender des Users finden (anhand der user_uuid in profiles)
-    // Wir joinen über owner_id (die die ID aus profiles ist)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_uuid', user.id)
-      .single();
-
-    if (!userProfile) throw new Error("Profil nicht gefunden");
-
-    const { data: userCalendar } = await supabase
-      .from('calendars')
-      .select('id')
-      .eq('owner_id', userProfile.id)
-      .single();
-
-    if (!userCalendar) throw new Error("Kein Kalender für diesen User gefunden");
-
-    // 3. Speichern
-    const start = new Date(data.start_time);
-    const duration = data.duration_minutes || 30;
-    const end = new Date(start.getTime() + (duration * 60000));
-
-    const { error } = await supabase
-      .from('calendar_events')
-      .insert([{
-        calendar_id: userCalendar.id, // Dynamisch!
-        title: data.title,
-        start_time: start.toISOString(),
-        end_time: end.toISOString(),
-        duration_minutes: duration,
-        is_private: !!data.is_private,
-        description: data.description || "",
-        location: data.location || ""
-      }]);
-
-    if (error) throw error;
-    setIsModalOpen(false);
-  } catch (err) {
-    console.error("Fehler beim Speichern:", err);
-    alert("Fehler: " + err.message);
-  }
-}}
+      {/* Hier kommt später dein Gitter wieder hin */}
+      {/* Floating Action Button für neue Termine */}
+<button
+  onClick={() => setIsModalOpen(true)}
+  className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-primary-foreground rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center text-3xl hover:scale-110 active:scale-95 transition-all z-50 border border-primary/20"
+>
+  +
+</button>
 
 
+{/* Das Modal wird hier permanent gerendert, aber nur bei isModalOpen = true sichtbar */}
+<EventModal 
+  isOpen={isModalOpen} 
+  onClose={() => setIsModalOpen(false)}
+  initialDate={selectedCell.date} 
+  initialTime={selectedCell.time}
+/>
 
-      />
-    </div> /* Schließt das Haupt-Div */
+
+    </div>
   );
 }
