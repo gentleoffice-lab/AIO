@@ -74,54 +74,35 @@ export default function KalenderPage() {
 
 
 
-      {/* Header Bereich */}
-      
-<div className="flex items-center justify-between p-4 border-b border-border">
-  {/* Linke Seite: Navigation & Datum */}
-  <div className="flex items-center gap-4">
-    <div className="text-xs text-muted-foreground">{currentDate.getFullYear()}</div>
-    <div className="flex items-center gap-2">
-      <button 
-  onClick={() => setCurrentDate(prev => 
-    view === "week" ? subWeeks(prev, 1) : subMonths(prev, 1)
-  )} 
-  className="p-2 hover:bg-accent rounded-full transition-colors"
->
-  &lt;
-</button>
-      <h2 
-  className="text-lg font-bold w-40 text-center cursor-pointer hover:text-primary transition-colors"
-  onClick={() => {/* Hier später DatePicker für Jahr öffnen */}}
->
-  {format(currentDate, view === "week" ? "dd. MMM" : "MMMM yyyy", { locale: de })}
-</h2>
-<button 
-  onClick={() => setCurrentDate(prev => 
-    view === "week" ? addWeeks(prev, 1) : addMonths(prev, 1)
-  )} 
-  className="p-2 hover:bg-accent rounded-full transition-colors"
->
-  &gt;
-</button>
-    </div>
+      {/* Header Bereich - Aufgeräumt */}
+<div className="flex items-center justify-between p-4 border-b border-border bg-background">
+  
+  {/* Linke Seite: Menü & Monat */}
+  <div className="flex items-center gap-3">
+    <button className="p-2 hover:bg-accent rounded-full transition-colors">
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+    </button>
+    <h2 className="text-xl font-bold">
+      {format(currentDate, "MMMM yyyy", { locale: de })}
+    </h2>
   </div>
 
-  {/* Rechte Seite: Suche, Heute & User */}
-  <div className="flex items-center gap-3">
-    <button className="p-2 hover:bg-accent rounded">🔍</button>
+  {/* Rechte Seite: Drei Symbole (Suche, Heute, Benutzer) */}
+  <div className="flex items-center gap-2">
+    <button className="p-2 hover:bg-accent rounded-full transition-colors">🔍</button>
     <button 
       onClick={() => setCurrentDate(new Date())} 
-      className="px-3 py-1 text-sm border rounded hover:bg-accent"
+      className="p-2 hover:bg-accent rounded-full transition-colors text-sm font-semibold"
     >
-      Heute
+      📅
     </button>
-    
-    {/* Hier wird später dein User-Icon aus dem Profil geladen */}
-    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center cursor-pointer border border-primary/10">
       👤
     </div>
   </div>
 </div>
+
+
 
 
 {/* View-Switcher */}
@@ -139,7 +120,10 @@ export default function KalenderPage() {
 
 {/* Hier laden wir die Ansicht dynamisch */}
 <div className="flex-1 overflow-auto p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+  
   {view === "list" && <ListView events={events} />}
+
+
 
   {view === "week" && (
   <WeekView 
@@ -148,40 +132,17 @@ export default function KalenderPage() {
   onCellClick={(date, time) => {
     setSelectedCell({ date: format(date, "yyyy-MM-dd"), time });
     setIsModalOpen(true);
-  }} 
+  }}
+  
+  
+
+
 />
-)}
-
-  {/* Weitere Views folgen... */}
+)}  
 </div>
 
 
 
-
-      {/* TEST: Hier zeigen wir die geladenen Events als Liste an */}
-      {/* Chronologische Liste der Termine */}
-<div className="p-4 bg-card rounded-lg border border-border mt-4">
-  <h3 className="font-semibold mb-4 text-lg">Bevorstehende Termine</h3>
-  {events.length > 0 ? (
-    <div className="space-y-3">
-      {events.map((e) => (
-        <div key={e.id} className="flex items-center p-3 bg-accent/50 rounded-md hover:bg-accent transition-colors">
-          <div className="min-w-[120px] text-sm font-medium text-primary">
-            {format(new Date(e.start_time), "dd.MM. HH:mm", { locale: de })}
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">{e.title}</p>
-            {e.description && <p className="text-xs text-muted-foreground">{e.description}</p>}
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-sm text-muted-foreground">Keine Termine geplant.</p>
-  )}
-
-
-</div>
 
       {/* Hier kommt später dein Gitter wieder hin */}
       {/* Floating Action Button für neue Termine */}

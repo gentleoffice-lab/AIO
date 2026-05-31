@@ -44,16 +44,20 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}` },
-      });
-      if (error) setErrorMsg(`Google-Login fehlgeschlagen: ${error.message}`);
-    } catch (err) {
-      console.error("Fehler beim OAuth-Flow:", err);
-    }
-  };
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      // Diese Parameter sind entscheidend für den Kalenderzugriff
+      queryParams: {
+        access_type: 'offline', // Wichtig: Damit dein Token auch im Hintergrund erneuert werden kann
+        prompt: 'consent',      // Wichtig: Erzwingt, dass Google die Berechtigungsabfrage zeigt
+        scope: 'email profile https://www.googleapis.com/auth/calendar' 
+      },
+    },
+  });
+  
+  if (error) console.error("Login Fehler:", error.message);
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 transition-colors duration-300 bg-background text-foreground">
